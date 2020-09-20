@@ -1,4 +1,5 @@
 from transformers import BertTokenizer,BertTokenizerFast
+import torch
 import os
 import sys
 import string
@@ -8,13 +9,11 @@ tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
 punctuations = list(string.punctuation)
 
 def get_token_mappings_line(l1,l2,word_mapping = None):
-    l1.replace("\n","")
-    l2.replace("\n","")
+    l1 = l1.replace("\n","")
+    l2 = l2.replace("\n","")
     token_mapping = []
     index_l1 = 1
     index_l2 = 1
-    encodings_1 = tokenizer(l1.replace("_"," "),return_tensors='pt',padding=True,truncation=True,max_length=512)
-    encodings_2 = tokenizer(l2.replace("_"," "),return_tensors='pt',padding=True,truncation=True,max_length=512)
     if word_mapping is None:
         words_l1 = l1.split(" ")
         words_l2 = l2.split(" ")
@@ -28,7 +27,9 @@ def get_token_mappings_line(l1,l2,word_mapping = None):
             index_l1 += len(tokens_1)
             index_l2 += len(tokens_2)
 
-    return encodings_1, encodings_2, token_mapping
+    return token_mapping
+
+
 
 
 def get_token_mapping_file(file1,file2,tok_file):
