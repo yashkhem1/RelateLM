@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import IterableDataset,DataLoader, Dataset
+from torch.utils.data import IterableDataset,DataLoader, Dataset, ConcatDataset
 from utils import get_token_mappings_line
 import os
 import sys
@@ -35,10 +35,10 @@ def custom_collate_fn(batch):
 
     
 if __name__=="__main__":
-    dataset = PseudoTokenMappingDataset('original_hindi.txt','pseudo_marathi.txt')
+    dataset = PseudoTokenMappingDataset('Hindi_sentences.txt','Marathi_pseudo_Hindi.txt')
     dl = DataLoader(dataset=dataset,batch_size=5,collate_fn=custom_collate_fn)
-    for i,x in enumerate(dl):
-        print(x[0])
+    for i,(x,y,z) in enumerate(dl):
+        print(z)
         if i==0:
             break
     

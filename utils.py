@@ -21,12 +21,11 @@ def get_token_mappings_line(l1,l2,word_mapping = None):
         for i in range(len(words_l1)):
             word_l1 = words_l1[i].replace("_"," ")
             word_l2 = words_l2[i].replace("_"," ")
-            tokens_1 = tokenizer(word_l1, add_special_tokens=False)
-            tokens_2 = tokenizer(word_l2, add_special_tokens=False)
+            tokens_1 = tokenizer.tokenize(word_l1)
+            tokens_2 = tokenizer.tokenize(word_l2)
             token_mapping.append((index_l1+len(tokens_1)-1,index_l2+len(tokens_2)-1))
             index_l1 += len(tokens_1)
             index_l2 += len(tokens_2)
-
     return token_mapping
 
 
@@ -42,7 +41,7 @@ def get_token_mapping_file(file1,file2,tok_file):
                 i=0
                 while line1:
                     map_string = ""
-                    _,_,token_mapping = get_token_mappings_line(line1,line2)
+                    token_mapping = get_token_mappings_line(line1,line2)
                     for mapping in token_mapping:
                         map_string+="("+str(mapping[0])+","+str(mapping[1])+")"+";"
                     map_string = map_string[:-1]+"\n"
