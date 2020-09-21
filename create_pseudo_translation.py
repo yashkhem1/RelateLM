@@ -65,7 +65,8 @@ def get_translation_statistics(l1,l2):
                         for punctuation in punctuations:
                             if word_l1.endswith(punctuation):
                                 word_l1 = word_l1[:-1*len(punctuation)]
-                        dict_keys_used.add(word_l1)
+                        if word_l1 in dict_keys:
+                            dict_keys_used.add(word_l1)
                 # print(len(dict_keys_used))
                 i+=1 
                 bar.update(i+1,total_dict=str(len(dict_keys)),dict_used=str(len(dict_keys_used)),used_perc=str(len(dict_keys_used)/len(dict_keys)),
