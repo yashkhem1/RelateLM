@@ -22,10 +22,11 @@ def train(l1,l2,batch_size):
     model.train()
     tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
     optim = AdamW(model.parameters(),lr=5e-5)
+    mse_loss = MSELoss()
     iterations = 0
     for epoch in range(10):
         print("Epoch ",epoch,"/",10)
-        bar = progressbar.ProgressBar(max_value =progressbar.UnknownLength)
+        bar = progressbar.ProgressBar(max_value =progressbar.UnknownLength, suffix = "Loss: {variables.loss}",variables={"loss":"--"})
         for dataloader in [token_mapping_dl_1,token_mapping_dl_2]:
             for i,(sent1,sent2,tok_maps) in enumerate(dataloader):
                 enc_1 = tokenizer(sent1,padding=True,truncation=True,return_tensors='pt',max_length=512)
@@ -40,19 +41,17 @@ def train(l1,l2,batch_size):
                     emb_orig_1 = embeddings_orig_1[j]
                     emb_2 = embeddings_2[j]
                     emb_orig_2 = embeddings_orig_2[j]
-                    print(emb_1.shape)
                     max_length_1 = emb_1.shape[0]
                     max_length_2 = emb_2.shape[0] 
                     tokens_1 = [x[0] for x in tok_map if x[0] < max_length_1]
                     tokens_2 = [x[1] for x in tok_map if x[1] < max_length_2]
                     min_toks = min(len(tokens_1),len(tokens_2))
-                    loss += MSELoss(emb_1[tokens_1[:min_toks],:],emb_2[tokens_2[:min_toks],:])
-                    loss += MSELoss(emb_1,emb_orig_1)
-                    loss += MSELoss(emb_2,emb_orig_2)
+                    loss += mse_loss(emb_1[tokens_1[:min_toks],:],emb_2[tokens_2[:min_toks],:])
+                    loss += mse_loss(emb_1,emb_orig_1)
+                    loss += mse_loss(emb_2,emb_orig_2)
                     loss.backward()
                     optim.step()
-                bar.suffix = "Loss: "+loss
-                bar.update(i)
+                bar.update(i, loss=loss.item())
                 iterations +=1
                 if iterations%100 == 0:
                         torch.save(model.state_dict(),'ckpt/bert_model.hdf5')
