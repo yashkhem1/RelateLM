@@ -40,11 +40,12 @@ def train(l1,l2,batch_size):
                     emb_orig_1 = embeddings_orig_1[j]
                     emb_2 = embeddings_2[j]
                     emb_orig_2 = embeddings_orig_2[j]
-                    max_length_1 = emb_1.shape[1]
-                    max_length_2 = emb_2.shape[1] 
+                    print(emb_1.shape)
+                    max_length_1 = emb_1.shape[0]
+                    max_length_2 = emb_2.shape[0] 
                     tokens_1 = [x[0] for x in tok_map if x[0] < max_length_1]
                     tokens_2 = [x[1] for x in tok_map if x[1] < max_length_2]
-                    min_toks = min(len(tokens_1),len(tokens_2))
+                    min_toks = min(len(tokens_1),len(tokens_2)
                     loss += MSELoss(emb_1[tokens_1[:min_toks],:],emb_2[tokens_2[:min_toks],:])
                     loss += MSELoss(emb_1,emb_orig_1)
                     loss += MSELoss(emb_2,emb_orig_2)
