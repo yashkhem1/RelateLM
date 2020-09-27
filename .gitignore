@@ -1,0 +1,6 @@
+*.txt
+*.pkl
+*.tar.gz
+*.pyc
+*.bz2
+settings.json

@@ -10,11 +10,11 @@ import progressbar
 # device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 device = torch.device('cpu')
 
-def train(l1,l2):
+def train(l1,l2,batch_size):
     token_mapping_datset_1 = PseudoTokenMappingDataset(l1+'_sentences.txt',l2+'_pseudo_'+l1+'.txt')
     token_mapping_datset_2 = PseudoTokenMappingDataset(l2+'_sentences.txt',l1+'_pseudo_'+l2+'.txt')
-    token_mapping_dl_1 = DataLoader(token_mapping_datset_1,batch_size=64,collate_fn=custom_collate_fn)
-    token_mapping_dl_2 = DataLoader(token_mapping_datset_2,batch_size=64,collate_fn=custom_collate_fn) 
+    token_mapping_dl_1 = DataLoader(token_mapping_datset_1,batch_size=batch_size,collate_fn=custom_collate_fn)
+    token_mapping_dl_2 = DataLoader(token_mapping_datset_2,batch_size=batch_size,collate_fn=custom_collate_fn) 
     model = BertModel.from_pretrained('bert-base-multilingual-cased',return_dict=True)
     model_orig = BertModel.from_pretrained('bert-base-multilingual-cased',return_dict=True)
     model = model.to(device)
@@ -61,7 +61,8 @@ def train(l1,l2):
 if __name__ == "__main__":
     l1 = sys.argv[1]
     l2 = sys.argv[2]
-    train(l1,l2)
+    batch_size = int(sys.argv[3])
+    train(l1,l2,batch_size)
 
 
         
