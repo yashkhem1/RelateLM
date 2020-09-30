@@ -21,10 +21,11 @@ class PseudoTokenMappingDataset(IterableDataset):
         return line1_strip, line2_strip, tok_maps
 
     def __iter__(self):
-        l1_iter = open(self.file1)
-        l2_iter = open(self.file2)
+        l1_iter = open(self.file1,encoding='utf-8')
+        l2_iter = open(self.file2,encoding='utf-8')
         tok_maps = map(self.preprocess,l1_iter,l2_iter)
         return tok_maps
+
 
         
 def custom_collate_fn(batch):
@@ -38,7 +39,7 @@ if __name__=="__main__":
     dataset = PseudoTokenMappingDataset('Hindi_sentences.txt','Marathi_pseudo_Hindi.txt')
     dl = DataLoader(dataset=dataset,batch_size=5,collate_fn=custom_collate_fn)
     for i,(x,y,z) in enumerate(dl):
-        print(z)
+        print(x)
         if i==0:
             break
     

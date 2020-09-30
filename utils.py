@@ -1,4 +1,4 @@
-from transformers import BertTokenizer,BertTokenizerFast
+from transformers import BertTokenizer
 import torch
 import os
 import sys
