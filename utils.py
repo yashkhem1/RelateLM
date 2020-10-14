@@ -95,8 +95,8 @@ def preprocess_with_mappings(file1,file2,outfile,max_length,tokenizer,document_i
                             tok_maps_2 = []
                         
                         else:
-                            ids_1 += [x+len(ids_1) for x in token_ids_l1]
-                            ids_2 += [x+len(ids_2) for x in token_ids_l2]
+                            ids_1 += token_ids_l1
+                            ids_2 += token_ids_l2
                             masks_1 += [1]*len(token_ids_l1)
                             masks_2 += [1]*len(token_ids_l2)
                             tok_maps_1 += [x+len(ids_1) for x in token_maps_l1]
