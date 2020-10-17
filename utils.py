@@ -27,6 +27,8 @@ def tokenize_with_mappings(l1,l2,tokenizer,word_mapping = None):
             word_l2 = words_l2[i].replace("_"," ")
             tokens_1 = tokenizer.encode(word_l1,add_special_tokens = False)
             tokens_2 = tokenizer.encode(word_l2,add_special_tokens = False)
+            if len(tokens_1) == 0 or len(tokens_2) == 0:
+                continue
             token_ids_l1 += tokens_1
             token_ids_l2 += tokens_2
             token_maps_l1.append(index_l1+len(tokens_1)-1)
@@ -54,7 +56,7 @@ def preprocess_with_mappings(file1,file2,outfile,max_length,tokenizer,document_i
                 while line1:
                     if document_information:
                         token_ids_l1, token_ids_l2, token_maps_l1, token_maps_l2 = tokenize_with_mappings(line1,line2,tokenizer,word_mapping)
-                        if (len(ids_1) + len(token_ids_l1) > max_length) or (len(ids_2) + len(token_ids_l2) > max_length) or line1=="\n":
+                        if (len(ids_1) + len(token_ids_l1) >= max_length) or (len(ids_2) + len(token_ids_l2) >= max_length) or line1=="\n":
                             if not (len(ids_1)==1 or len(ids_2)==1):
                                 ids_1 += [102]+[0]*(max_length-len(ids_1)-1)
                                 ids_2 += [102]+[0]*(max_length-len(ids_2)-1)
@@ -109,7 +111,6 @@ if __name__ == "__main__":
         outfile = l1 + '_' + l2 +'.json'
         preprocess_with_mappings(file1,file2,outfile,max_length,tokenizer)
                     
-
 
 
 
