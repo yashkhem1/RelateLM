@@ -17,12 +17,14 @@ class WikipediaTokenMapDataset(Dataset):
                 json_ = json.load(f)
                 self.dict_list += json_['data']
 
+        del json_
+
     def __len__(self):
         return len(self.dict_list)
 
     def __getitem__(self,index):
-        dict_i = self.dict_list[index]
-        return dict_i['token_ids_1'],dict_i['token_ids_2'],dict_i['token_maps_1'],dict_i['token_maps_2']
+        # return dict_i['token_ids_1'],dict_i['token_ids_2'],dict_i['token_maps_1'],dict_i['token_maps_2']
+        return torch.Tensor(self.dict_list[index]['token_ids_1']),torch.Tensor(self.dict_list[index]['token_ids_2'])
 
 
         
@@ -44,6 +46,7 @@ def token_maps_collate(batch):
     weights_2 = (tok_maps_2>0).type(torch.int).view(-1,1)
     flat_maps_1 = (tok_maps_1 + max_len*(torch.arange(batch_size).view(-1,1))).view(-1)
     flat_maps_2 = (tok_maps_2 + max_len*(torch.arange(batch_size).view(-1,1))).view(-1)
+    del tok_maps_1, tok_maps_2
     return tok_ids_1, tok_ids_2, flat_maps_1, flat_maps_2, att_masks_1, att_masks_2, weights_1, weights_2
     
 if __name__=="__main__":
