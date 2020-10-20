@@ -34,28 +34,30 @@ def train_loop(dl, model, optimizer, device, epoch):
     # for i,(tok_ids_1,tok_ids_2,flat_maps_1,flat_maps_2, att_masks_1, att_masks_2,weights_1, weights_2) in enumerate(dl):
     for i, batch in enumerate(dl):
         optimizer.zero_grad()
-        tok_ids_1,tok_ids_2 = batch
-        tok_ids_1,tok_ids_2 = tok_ids_1.to(device,dtype=torch.long), tok_ids_2.to(device,dtype=torch.long)
+        # tok_ids_1,tok_ids_2 = batch
+        tok_ids_1,tok_ids_2,flat_maps_1,flat_maps_2, att_masks_1, att_masks_2,weights_1, weights_2 = batch
+        tok_ids_1,tok_ids_2, att_masks_1, att_masks_2= tok_ids_1.to(device,dtype=torch.long), tok_ids_2.to(device,dtype=torch.long), att_masks_1.to(device,dtype=torch.long), att_masks_2.to(device,dtype=torch.long)
+        flat_maps_1,flat_maps_2,weights_1,weights_2 = flat_maps_1.to(device,dtype=torch.long),flat_maps_2.to(device,dtype=torch.long),weights_1.to(device,dtype=torch.float),weights_2.to(device,dtype=torch.float)
         start_time = time.time()
-        embeddings_1 = model(input_ids = tok_ids_1)[0]
-        embeddings_2 = model(input_ids = tok_ids_2)[0]
-        # embeddings_orig_1 = model_orig(input_ids = tok_ids_1, attention_mask= att_masks_1)[0]
-        # embeddings_orig_2 = model_orig(input_ids = tok_ids_2, attention_mask= att_masks_2)[0]
-        # hidden_size = embeddings_1.size(2)
-        # flat_embeddings_1 = embeddings_1.view(-1,hidden_size)
-        # flat_embeddings_2 = embeddings_2.view(-1,hidden_size)
-        # flat_orig_embeddings_1 = embeddings_orig_1.view(-1,hidden_size)
-        # flat_orig_embeddings_2 = embeddings_orig_2.view(-1,hidden_size)
-        # loss = loss_fn(flat_embeddings_1[flat_maps_1]*weights_1,flat_embeddings_2[flat_maps_2]*weights_2)
+        embeddings_1 = model(input_ids = tok_ids_1, attention_mask= att_masks_1)[0]
+        embeddings_2 = model(input_ids = tok_ids_2, attention_mask= att_masks_2)[0]
+        embeddings_orig_1 = model_orig(input_ids = tok_ids_1, attention_mask= att_masks_1)[0]
+        embeddings_orig_2 = model_orig(input_ids = tok_ids_2, attention_mask= att_masks_2)[0]
+        hidden_size = embeddings_1.size(2)
+        flat_embeddings_1 = embeddings_1.view(-1,hidden_size)
+        flat_embeddings_2 = embeddings_2.view(-1,hidden_size)
+        loss = loss_fn(flat_embeddings_1[flat_maps_1]*weights_1,flat_embeddings_2[flat_maps_2]*weights_2)
+        loss += loss_fn(embeddings_1,embeddings_orig_1)
+        loss += loss_fn(embeddings_2,embeddings_orig_2)
         # loss+= loss_fn(flat_orig_embeddings_1[flat_maps_1]*weights_1,flat_orig_embeddings_2[flat_maps_2]*weights_2)
-        loss = loss_fn(embeddings_1,embeddings_2)
+        # loss = loss_fn(embeddings_1,embeddings_2)
         loss.backward()
         xm.optimizer_step(optimizer)
         
         if (i+1)%1 == 0:
             xm.master_print('[xla:{}], Iteration: {}, Time:{}s, Rate={:.2f}, GlobalRate={:.2f}'.format(xm.get_ordinal(), str(i+1), time.time()-start_time, tracker.rate(), tracker.global_rate() ),flush=True)
-        # del tok_ids_1, tok_ids_2, flat_maps_1, flat_maps_2, att_masks_1, att_masks_2, weights_1, weights_2, flat_embeddings_1, flat_embeddings_2, embeddings_1, embeddings_2, embeddings_orig_1, embeddings_orig_2, flat_orig_embeddings_1, flat_orig_embeddings_2
-        del tok_ids_1, tok_ids_2, embeddings_2, embeddings_1
+        del tok_ids_1, tok_ids_2, flat_maps_1, flat_maps_2, att_masks_1, att_masks_2, weights_1, weights_2, flat_embeddings_1, flat_embeddings_2, embeddings_1, embeddings_2, embeddings_orig_1, embeddings_orig_2
+        # del tok_ids_1, tok_ids_2, embeddings_2, embeddings_1
         del loss
             # xm.save(model.state_dict(),'ckpt/bert_model.hdf5')
     gc.collect()
@@ -79,12 +81,12 @@ def train(index,dataset,batch_size,model,model_orig):
     #     xm.rendezvous('download_only_once')
     
     dist_sampler = torch.utils.data.distributed.DistributedSampler(token_map_dataset,num_replicas=xm.xrt_world_size(),rank=xm.get_ordinal(),shuffle=True)
-    # token_map_dl = DataLoader(token_map_dataset,batch_size=batch_size,sampler=dist_sampler,num_workers=0,drop_last=True, collate_fn=token_maps_collate)
-    token_map_dl = DataLoader(token_map_dataset,batch_size=batch_size,sampler=dist_sampler,num_workers=0,drop_last=True)
+    token_map_dl = DataLoader(token_map_dataset,batch_size=batch_size,sampler=dist_sampler,num_workers=0,drop_last=True, collate_fn=token_maps_collate)
+    # token_map_dl = DataLoader(token_map_dataset,batch_size=batch_size,sampler=dist_sampler,num_workers=0,drop_last=True)
     gc.collect()
     model.to(device)
-    # model_orig.to(device)
-    # model_orig.eval()
+    model_orig.to(device)
+    model_orig.eval()
     
     param_optimizer = list(model.named_parameters())
     no_decay = ['bias', 'LayerNorm.weight']

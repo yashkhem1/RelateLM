@@ -23,8 +23,8 @@ class WikipediaTokenMapDataset(Dataset):
         return len(self.dict_list)
 
     def __getitem__(self,index):
-        # return dict_i['token_ids_1'],dict_i['token_ids_2'],dict_i['token_maps_1'],dict_i['token_maps_2']
-        return torch.Tensor(self.dict_list[index]['token_ids_1']),torch.Tensor(self.dict_list[index]['token_ids_2'])
+        return self.dict_list[index]['token_ids_1'],self.dict_list[index]['token_ids_2'],self.dict_list[index]['token_maps_1'],self.dict_list[index]['token_maps_2']
+        # return torch.Tensor(self.dict_list[index]['token_ids_1']),torch.Tensor(self.dict_list[index]['token_ids_2'])
 
 
         
@@ -35,15 +35,15 @@ def custom_collate_fn(batch):
     return sentences_1,sentences_2,token_mappings
 
 def token_maps_collate(batch):
-    tok_ids_1 = torch.tensor([x[0] for x in batch])
-    tok_ids_2 = torch.tensor([x[1] for x in batch])
-    tok_maps_1 = torch.tensor([x[2] for x in batch])
-    tok_maps_2 = torch.tensor([x[3] for x in batch])
+    tok_ids_1 = torch.Tensor([x[0] for x in batch])
+    tok_ids_2 = torch.Tensor([x[1] for x in batch])
+    tok_maps_1 = torch.Tensor([x[2] for x in batch])
+    tok_maps_2 = torch.Tensor([x[3] for x in batch])
     att_masks_1 = tok_ids_1>0
     att_masks_2 = tok_ids_2>0
     batch_size,max_len = tok_ids_1.size()
-    weights_1 = (tok_maps_1>0).type(torch.int).view(-1,1)
-    weights_2 = (tok_maps_2>0).type(torch.int).view(-1,1)
+    weights_1 = (tok_maps_1>0).view(-1,1)
+    weights_2 = (tok_maps_2>0).view(-1,1)
     flat_maps_1 = (tok_maps_1 + max_len*(torch.arange(batch_size).view(-1,1))).view(-1)
     flat_maps_2 = (tok_maps_2 + max_len*(torch.arange(batch_size).view(-1,1))).view(-1)
     del tok_maps_1, tok_maps_2
