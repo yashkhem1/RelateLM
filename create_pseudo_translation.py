@@ -7,8 +7,16 @@ from tqdm import tqdm
 import progressbar
 
 def create_pseudo_translation(l1,l2,dir_='Wikipedia'):
+    dict_path = os.path.join('Bilingual_Mappings',l1+'_'+l2+'_dict.pkl')
+    if not os.path.exists(dict_path):
+        print("Dictionary file is not present")
+        return
     dictionary = pickle.load(open(os.path.join('Bilingual_Mappings',l1+'_'+l2+'_dict.pkl'),'rb'))
+
     monolingual_file = os.path.join(dir_,l1+'.txt')
+    if not os.path.exists(monolingual_file):
+        print("Monolingual file for language "+ l1 +" doesn't exist")
+        return
     pseudo_translation = os.path.join(dir_,l2+'_pseudo_'+l1+'.txt')
     bar = progressbar.ProgressBar(max_value=progressbar.UnknownLength,suffix="Number of lines translated: {variables.nlines}",
                                     variables={'nlines':'-'})
