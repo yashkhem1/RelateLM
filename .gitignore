@@ -3,4 +3,9 @@
 *.tar.gz
 *.pyc
 *.bz2
+ckpt/*
+tf_ckpt/*
+preprocessed_data/*
+configs/*
+vocab_files/*
 settings.json

@@ -5,23 +5,21 @@ import pickle
 import string
 from tqdm import tqdm
 import progressbar
+import argparse
 
-def create_pseudo_translation(l1,l2,dir_='Wikipedia'):
-    dict_path = os.path.join('Bilingual_Mappings',l1+'_'+l2+'_dict.pkl')
+def create_pseudo_translation(mono,dict_path,outfile):
     if not os.path.exists(dict_path):
         print("Dictionary file is not present")
         return
-    dictionary = pickle.load(open(os.path.join('Bilingual_Mappings',l1+'_'+l2+'_dict.pkl'),'rb'))
+    dictionary = pickle.load(open(dict_path,'rb'))
 
-    monolingual_file = os.path.join(dir_,l1+'.txt')
-    if not os.path.exists(monolingual_file):
-        print("Monolingual file for language "+ l1 +" doesn't exist")
+    if not os.path.exists(mono):
+        print("Monolingual data doesn't exist")
         return
-    pseudo_translation = os.path.join(dir_,l2+'_pseudo_'+l1+'.txt')
     bar = progressbar.ProgressBar(max_value=progressbar.UnknownLength,suffix="Number of lines translated: {variables.nlines}",
                                     variables={'nlines':'-'})
-    with open(monolingual_file,'r') as f:
-        with open(pseudo_translation,'w') as w:
+    with open(mono,'r') as f:
+        with open(outfile,'w') as w:
             for i,line in tqdm(enumerate(f)):
                 translation = ""
                 for word in line.split(" "):
@@ -47,19 +45,17 @@ def create_pseudo_translation(l1,l2,dir_='Wikipedia'):
                 bar.update(i,nlines=str(i))
 
 
-def get_translation_statistics(l1,l2):
-    dictionary = pickle.load(open(os.path.join('Bilingual_Mappings',l1+'_'+l2+'_dict.pkl'),'rb'))
+def get_translation_statistics(mono,dict_path,outfile):
+    dictionary = pickle.load(open(dict_path,'rb'))
     dict_keys = list(dictionary.keys())
     dict_keys_used = set()
     total_words = 0
     words_translated = 0
-    monolingual_file = l1+'_sentences.txt'
-    pseudo_translation = l2+'_pseudo_'+l1+'.txt'
     bar = progressbar.ProgressBar(term_width = 20,suffix="Total Dict: {variables.total_dict} Used Dict: {variables.dict_used} Used%: {variables.used_perc} Total: {variables.total_words} Translated: {variables.translated}",
                                                                         variables = {'total_dict':'--','dict_used':'--','used_perc':'--','total_words':'--','translated':'--'})
     i = 0
-    with open(monolingual_file,'r') as f1:
-        with open(pseudo_translation,'r') as f2:
+    with open(mono,'r') as f1:
+        with open(outfile,'r') as f2:
             line_l1 = next(f1)
             line_l2 = next(f2)
             while(line_l1 and line_l2):
@@ -88,7 +84,13 @@ def get_translation_statistics(l1,l2):
 
 
 if __name__=="__main__":
-    l1 = sys.argv[1]
-    l2 = sys.argv[2]
-    # dir_ = sys.argv[3]
-    create_pseudo_translation(l1,l2)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--mono',type=str,help='Path to monlingual data')
+    parser.add_argument('--dict_path',type=str,help='Path to dictionary file')
+    parser.add_argument('--outfile',type=str,help='Path to output file')
+    parser.add_argument('--stats',action='store_true',help='Get translation statistics')
+    args = parser.parse_args()
+    if not args.stats:
+        create_pseudo_translation(args.mono,args.dict_path,args.outfile)
+    else:
+        get_translation_statistics(args.mono,args.dict_path,args.outfile)

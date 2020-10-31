@@ -34,8 +34,6 @@ def train_loop(dl, model, optimizer, device, epoch,ckpt,print_every):
     loss_fn = MSELoss()
     for i,(tok_ids_1,tok_ids_2,flat_maps_1,flat_maps_2, att_masks_1, att_masks_2,weights_1, weights_2) in enumerate(dl):
         optimizer.zero_grad()
-        # tok_ids_1,tok_ids_2, att_masks_1, att_masks_2= tok_ids_1.to(device,dtype=torch.long), tok_ids_2.to(device,dtype=torch.long), att_masks_1.to(device,dtype=torch.long), att_masks_2.to(device,dtype=torch.long)
-        # flat_maps_1,flat_maps_2,weights_1,weights_2 = flat_maps_1.to(device,dtype=torch.long),flat_maps_2.to(device,dtype=torch.long),weights_1.to(device,dtype=torch.float),weights_2.to(device,dtype=torch.float)
         embeddings_1 = model(input_ids = tok_ids_1, attention_mask= att_masks_1)[0]
         embeddings_2 = model(input_ids = tok_ids_2, attention_mask= att_masks_2)[0]
         embeddings_orig_1 = model_orig(input_ids = tok_ids_1, attention_mask= att_masks_1)[0]
