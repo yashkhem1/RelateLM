@@ -27,7 +27,7 @@ def seed_everything(seed):
        np.random.seed(seed)
        torch.manual_seed(seed)
 
-def train_loop(dl, model, optimizer, device, epoch,ckpt,print_every):
+def train_loop(dl, model, model_orig, optimizer, device, epoch,ckpt,print_every):
     tracker = xm.RateTracker()
     model.train()
     xm.master_print("Epoch ",epoch,"/",10)
@@ -74,8 +74,8 @@ def train(index,dataset,batch_size,model,model_orig,ckpt,seed,epochs,print_every
     # if xm.is_master_ordinal():
     #     xm.rendezvous('download_only_once')
     
-    dist_sampler = torch.utils.data.distributed.DistributedSampler(token_map_dataset,num_replicas=xm.xrt_world_size(),rank=xm.get_ordinal(),shuffle=True)
-    token_map_dl = DataLoader(token_map_dataset,batch_size=batch_size,sampler=dist_sampler,num_workers=0,drop_last=True, collate_fn=token_maps_collate)
+    dist_sampler = torch.utils.data.distributed.DistributedSampler(dataset,num_replicas=xm.xrt_world_size(),rank=xm.get_ordinal(),shuffle=True)
+    token_map_dl = DataLoader(dataset,batch_size=batch_size,sampler=dist_sampler,num_workers=0,drop_last=True, collate_fn=token_maps_collate)
     gc.collect()
     model.to(device)
     model_orig.to(device)
@@ -93,7 +93,7 @@ def train(index,dataset,batch_size,model,model_orig,ckpt,seed,epochs,print_every
     # mse_loss = MSELoss()
     for epoch in range(epochs):
         para_token_map_dl = pl.ParallelLoader(token_map_dl,[device]).per_device_loader(device)
-        train_loop(para_token_map_dl,model,optim,device,epoch,ckpt,print_every)
+        train_loop(para_token_map_dl,model,model_orig, optim,device,epoch,ckpt,print_every)
         
 
 
@@ -101,7 +101,7 @@ def train(index,dataset,batch_size,model,model_orig,ckpt,seed,epochs,print_every
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--files',nargs='+',type=str,help='List of pre-processed token mapping files')
-    parser.add_argument('--batch_size',type=int,default=128,help='Train batch size')
+    parser.add_argument('--batch_size',type=int,default=64,help='Train batch size')
     parser.add_argument('--load',type=str,help='Path to pretrained model checkpoint')
     parser.add_argument('--is_tf',action='store_true',default='',help='Whether the model is trained using TF or PyTorch')
     parser.add_argument('--ckpt',type=str,help='Path where model is to be saved')
