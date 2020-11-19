@@ -8,85 +8,38 @@ from indictrans import Transliterator
 def get_bilingual_dictionary(bilingual,o1,o2,l1,l2,transliterate,trans_lang,include_wiktionary,choose_random=True):
     l1_l2_dict = {}
     l2_l1_dict = {}
+    trn = None
     if transliterate:
         if trans_lang == 'l1':
             trn = Transliterator(source=l2,target=l1,build_lookup=True)
+            tl = [1,2]
         else:
             trn = Transliterator(source=l1,target=l2,build_lookup=True)
+            tl = [2,1]
     
-    dir1 = bilingual[0]
-    if os.path.exists(dir1):
-        files = list(os.listdir(dir1))
-        if 'wiktionary.txt' in files: #This is done so that if lexicon is already present in other file, wiktionary doesn't override it, since it is less reliable
-            files.remove('wiktionary.txt')
-            files.append('wiktionary.txt')
-        for file_ in files:
-            already_trans = False
-            if file_ == 'wiktionary.txt':
-                if not include_wiktionary:
-                    continue
-                else:
-                    already_trans = True
-            with open(os.path.join(dir1,file_),encoding='utf-8') as f:
-                lines = f.readlines()
-            for line in lines:
-                l1_word = line.split(":")[0]
-                if transliterate and trans_lang == 'l2' and not already_trans:
-                    l1_word = trn.transform(l1_word)
-                l1_word = l1_word.strip()
+    for i,dir_ in enumerate(bilingual):
+        if not os.path.exists(dir_):
+            print("Directory {} not present".format(dir_))
+            exit(1)
+        else:
+            files = os.listdir(dir_)
+            if "wiktionary.txt" in files:
+                files.remove("wiktionary.txt")
+            if i == 0:
+                populate_dict(dir_,files,l1_l2_dict,l2_l1_dict,True,transliterate,trn,tl[i],False)
+            else:
+                populate_dict(dir_,files,l2_l1_dict,l1_l2_dict,True,transliterate,trn,tl[i],False)
 
-                l2_words = line.split(":")[1][1:]
-                if transliterate and trans_lang == 'l1' and not already_trans:
-                    l2_words = trn.transform(l2_words)
-                l2_words = l2_words.split(" ")
-                if choose_random:
-                    l2_word = l2_words[0].strip()
-                
-                if l1_word and l2_word and l1_word not in l1_l2_dict:
-                    l1_l2_dict[l1_word] = l2_word
-                
-                for word in l2_words:
-                    word = word.strip()
-                    if word and l1_word and word not in l2_l1_dict:
-                        l2_l1_dict[word] = l1_word
+    for i,dir_ in enumerate(bilingual):
+        files = os.listdir(dir_)
+        if "wiktionary.txt" in files:
+            files = ["wiktionary.txt"]
+            if i == 0:
+                populate_dict(dir_,files,l1_l2_dict,l2_l1_dict,False,transliterate,trn,tl[i],True)
+            else:
+                populate_dict(dir_,files,l2_l1_dict,l1_l2_dict,False,transliterate,trn,tl[i],True)
+        
 
-    if len(bilingual) > 1:
-        dir2 = bilingual[1]
-        if os.path.exists(dir2):
-            files = list(os.listdir(dir2))
-            if 'wiktionary.txt' in files:
-                files.remove('wiktionary.txt')
-                files.append('wiktionary.txt')
-            for file_ in files:
-                already_trans = False
-                if file_ == 'wiktionary.txt':
-                    if not include_wiktionary:
-                        continue
-                    else:
-                        already_trans = True
-                with open(os.path.join(dir2,file_),encoding='utf-8') as f:
-                    lines = f.readlines()
-                for line in lines:
-                    l2_word = line.split(":")[0]
-                    if transliterate and trans_lang == 'l1' and not already_trans:
-                        l2_word = trn.transform(l2_word)
-                    l2_word = l2_word.strip()
-
-                    l1_words = line.split(":")[1][1:]
-                    if transliterate and trans_lang == 'l2' and not already_trans:
-                        l1_words = trn.transform(l1_words)
-                    l1_words = l1_words.split(" ")
-                    if choose_random:
-                        l1_word = l1_words[0].strip()
-                    
-                    if l2_word and l1_word and l2_word not in l2_l1_dict:
-                        l2_l1_dict[l2_word] = l1_word
-
-                    for word in l1_words:
-                        if word not in l1_l2_dict:
-                            word = word.strip()
-                            if word and l2_word:
-                                l1_l2_dict[word] = l2_word
     
     print("Size of",l1,"-",l2,"dictionary:",len(l1_l2_dict.keys()))
     print("Size of",l2,"-",l1,"dictionary:",len(l2_l1_dict.keys()))
@@ -96,7 +49,33 @@ def get_bilingual_dictionary(bilingual,o1,o2,l1,l2,transliterate,trans_lang,incl
 
     with open(o2,'wb') as w:
         pickle.dump(l2_l1_dict,w)
-    
+
+def populate_dict(dir_,files,dict_1,dict_2,can_replace=False,transliterate=False,trn=None,trans_lang=1,already_trans=False,choose_random=True):
+    for file_ in files:
+        with open(os.path.join(dir_,file_),encoding='utf-8') as f:
+            lines = f.readlines()
+        for line in lines:
+            l1_word = line.split(":")[0]
+            if transliterate and trans_lang == 2 and not already_trans:
+                l1_word = trn.transform(l1_word)
+            l1_word = l1_word.strip()
+
+            l2_words = line.split(":")[1][1:]
+            if transliterate and trans_lang == 1 and not already_trans:
+                l2_words = trn.transform(l2_words)
+            l2_words = l2_words.split(" ")
+            if choose_random:
+                l2_word = l2_words[0].strip()
+            
+            if l1_word and l2_word and ((l1_word not in dict_1) or can_replace):
+                dict_1[l1_word] = l2_word
+            
+            for word in l2_words:
+                word = word.strip()
+                if word and l1_word and (word not in dict_2):
+                    dict_2[word] = l1_word
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
