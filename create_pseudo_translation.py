@@ -41,7 +41,7 @@ def create_pseudo_translation(mono,dict_path,outfile,transliterate=False,l1='hin
                         word = word[:-1*len(punctuation)]
                         punct = punctuation
                         break
-                if word in dictionary.keys() and  word not in ('\n',' ','',' \n'):
+                if word in dictionary and  word not in ('\n',' ','',' \n'):
                     translated = dictionary[word] + punct + nl
                 else:
                     if transliterate:

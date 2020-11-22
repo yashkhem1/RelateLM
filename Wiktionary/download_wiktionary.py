@@ -2,6 +2,9 @@ import os
 import requests
 from bs4 import BeautifulSoup
 
+#-------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------Downloading----------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------------
 url_dict = {}
 url_dict['Hindi-Hindi'] = 'https://hi.wiktionary.org/wiki/%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80_%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80_%E0%A4%B6%E0%A4%AC%E0%A5%8D%E0%A4%A6%E0%A4%95%E0%A5%8B%E0%A4%B6'
 url_dict['Sanskrit-Hindi'] = 'https://hi.wiktionary.org/wiki/%E0%A4%B5%E0%A4%BF%E0%A4%95%E0%A5%8D%E0%A4%B7%E0%A4%A8%E0%A4%B0%E0%A5%80:%E0%A4%B8%E0%A4%82%E0%A4%B8%E0%A5%8D%E0%A4%95%E0%A5%83%E0%A4%A4-%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80_%E0%A4%B6%E0%A4%AC%E0%A5%8D%E0%A4%A6%E0%A4%95%E0%A5%8B%E0%A4%B6'
@@ -36,6 +39,22 @@ def download_pan_hin():
     with open('Punjabi-Hindi.txt','w') as f:
         f.writelines(lines)
 
+def download_guj_hin():
+    url = url_dict['Gujarati-Hindi']
+    print(url)
+    lines = []
+    page_ = requests.get(url)
+    soup_ = BeautifulSoup(page_.content,'html.parser')
+    data = soup_.select('div.mw-parser-output ol li')
+    for datum in data:
+        lines.append(datum.text+'\n')
+    with open('Gujarati-Hindi.txt','w') as f:
+        f.writelines(lines)
+
+#-------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------Parsing----------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------------------
+
 def parse_pan_hin():
     with open('Punjabi-Hindi.txt','r') as f:
         lines = f.readlines()
@@ -49,9 +68,21 @@ def parse_pan_hin():
                 l2_words  =[x.replace(stop_word,"").strip() for x in l2_words]
             l2_words = [x.replace(" ","_") for x in l2_words]
             w.write(l1_word+': '+" ".join(l2_words)+"\n")
-        
+
+def parse_guj_hin():
+    with open('Gujarati-Hindi.txt','r') as f:
+        lines = f.readlines()
+    with open('wiktionary.txt','w') as w:
+        for line in lines:
+            line = line.strip()
+            l1_word = line.split('--')[0].strip().replace(" ","_")
+            l2_word = line.split('--')[1].split('//')[0].split(',')[0].strip().replace(" ","_")
+            w.write(l1_word+": "+l2_word+"\n")
+
 
 
 if __name__=="__main__":
     # download_pan_hin()
-    parse_pan_hin()
+    # parse_pan_hin()
+    # download_guj_hin()
+    parse_guj_hin()
