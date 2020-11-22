@@ -11,8 +11,6 @@ import numpy as np
 punctuations = list(string.punctuation)
 
 def tokenize_with_mappings(l1,l2,tokenizer,word_mapping = None):
-    l1 = l1.strip()
-    l2 = l2.strip()
     token_ids_l1 = []
     token_ids_l2 = []
     token_maps_l1 = []
@@ -47,6 +45,7 @@ def preprocess_with_mappings(file1,file2,outfile,max_length,tokenizer,document_i
         with open(file2,'r') as f2:
             lines_1 = f1.readlines()
             lines_2 = f2.readlines()
+    assert(len(lines_1)==len(lines_2))
     print("Read Complete")
     bar = progressbar.ProgressBar(max_value=len(lines_1))
     with open(outfile,'w') as w:

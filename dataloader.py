@@ -16,7 +16,7 @@ class WikipediaTokenMapDataset(Dataset):
                         json_ = json.load(f)
                     except json.JSONDecodeError as err:
                         # grab a reasonable section, say 40 characters.
-                        start, stop = max(0, err.pos - 20), err.pos + 20
+                        start, stop = max(0, err.pos - 40), err.pos + 40
                         snippet = err.doc[start:stop]
                         print(err)
                         print('... ' if start else '', snippet, ' ...' if stop < len(err.doc) else '', sep="")
@@ -117,8 +117,9 @@ def token_maps_collate(batch):
     return tok_ids_1, tok_ids_2, flat_maps_1, flat_maps_2, att_masks_1, att_masks_2, weights_1, weights_2
     
 if __name__=="__main__":
-    dataset = BilingualWithNegativeSampling(['preprocessed_data/Hindi_Punjabi_trans_Hindi_bilingual.json'],2)
-    dl = DataLoader(dataset=dataset,batch_size=2,shuffle=False)
+    # dataset = BilingualWithNegativeSampling(['preprocessed_data/Hindi_Punjabi_trans_Hindi_bilingual.json'],2)
+    dataset = WikipediaTokenMapDataset(['preprocessed_data/Hindi_Punjabi_trans_Hindi_wik.json'])
+    dl = DataLoader(dataset=dataset,batch_size=2,shuffle=False,collate_fn=token_maps_collate)
     for i,b in enumerate(dl):
         print(b)
         break

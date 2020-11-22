@@ -9,13 +9,20 @@ def get_bilingual_dictionary(bilingual,o1,o2,l1,l2,transliterate,trans_lang,incl
     l1_l2_dict = {}
     l2_l1_dict = {}
     trn = None
-    if transliterate:
-        if trans_lang == 'l1':
+
+    if trans_lang == 'l1':
+        tl = [1,2]
+        if transliterate:
             trn = Transliterator(source=l2,target=l1,build_lookup=True)
-            tl = [1,2]
         else:
             trn = Transliterator(source=l1,target=l2,build_lookup=True)
-            tl = [2,1]
+    else:
+        tl = [2,1]
+        if transliterate:
+            trn = Transliterator(source=l1,target=l2,build_lookup=True)
+        else:
+            trn = Transliterator(source=l2,target=l1,build_lookup=True)
+
     
     for i,dir_ in enumerate(bilingual):
         if not os.path.exists(dir_):
@@ -29,15 +36,16 @@ def get_bilingual_dictionary(bilingual,o1,o2,l1,l2,transliterate,trans_lang,incl
                 populate_dict(dir_,files,l1_l2_dict,l2_l1_dict,True,transliterate,trn,tl[i],False)
             else:
                 populate_dict(dir_,files,l2_l1_dict,l1_l2_dict,True,transliterate,trn,tl[i],False)
-
-    for i,dir_ in enumerate(bilingual):
-        files = os.listdir(dir_)
-        if "wiktionary.txt" in files:
-            files = ["wiktionary.txt"]
-            if i == 0:
-                populate_dict(dir_,files,l1_l2_dict,l2_l1_dict,False,transliterate,trn,tl[i],True)
-            else:
-                populate_dict(dir_,files,l2_l1_dict,l1_l2_dict,False,transliterate,trn,tl[i],True)
+    
+    if include_wiktionary:
+        for i,dir_ in enumerate(bilingual):
+            files = os.listdir(dir_)
+            if "wiktionary.txt" in files:
+                files = ["wiktionary.txt"]
+                if i == 0:
+                    populate_dict(dir_,files,l1_l2_dict,l2_l1_dict,False,transliterate,trn,tl[i],True)
+                else:
+                    populate_dict(dir_,files,l2_l1_dict,l1_l2_dict,False,transliterate,trn,tl[i],True)
         
 
     
@@ -56,13 +64,13 @@ def populate_dict(dir_,files,dict_1,dict_2,can_replace=False,transliterate=False
             lines = f.readlines()
         for line in lines:
             l1_word = line.split(":")[0]
-            if transliterate and trans_lang == 2 and not already_trans:
+            if (transliterate and trans_lang == 2 and not already_trans) or (not transliterate and trans_lang == 2 and already_trans):
                 l1_word = trn.transform(l1_word)
-            l1_word = l1_word.strip()
 
             l2_words = line.split(":")[1][1:]
-            if transliterate and trans_lang == 1 and not already_trans:
+            if (transliterate and trans_lang == 1 and not already_trans) or (not transliterate and trans_lang == 1 and already_trans):
                 l2_words = trn.transform(l2_words)
+
             l2_words = l2_words.split(" ")
             if choose_random:
                 l2_word = l2_words[0].strip()

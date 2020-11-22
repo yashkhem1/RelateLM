@@ -6,8 +6,9 @@ import string
 from tqdm import tqdm
 import progressbar
 import argparse
+from indictrans import Transliterator
 
-def create_pseudo_translation(mono,dict_path,outfile):
+def create_pseudo_translation(mono,dict_path,outfile,transliterate=False,l1='hin',l2='pan'):
     if not os.path.exists(dict_path):
         print("Dictionary file is not present")
         return
@@ -16,6 +17,9 @@ def create_pseudo_translation(mono,dict_path,outfile):
     if not os.path.exists(mono):
         print("Monolingual data doesn't exist")
         return
+
+    if transliterate:
+        trn = Transliterator(source=l1,target=l2,build_lookup=True)
     
     with open(mono,'r') as f:
         lines = f.readlines()
@@ -40,7 +44,14 @@ def create_pseudo_translation(mono,dict_path,outfile):
                 if word in dictionary.keys() and  word not in ('\n',' ','',' \n'):
                     translated = dictionary[word] + punct + nl
                 else:
-                    translated = word + punct + nl
+                    if transliterate:
+                        trans_word = trn.transform(word)
+                        if trans_word:
+                            translated = trans_word + punct + nl
+                        else:
+                            translated = word + punct + nl
+                    else:
+                        translated = word + punct + nl
                 
                 translation+=translated+" "
 
@@ -53,5 +64,8 @@ if __name__=="__main__":
     parser.add_argument('--mono',type=str,help='Path to monlingual data')
     parser.add_argument('--dict_path',type=str,help='Path to dictionary file')
     parser.add_argument('--outfile',type=str,help='Path to output file')
+    parser.add_argument('--transliterate',action='store_true',help='Transliterate to other script')
+    parser.add_argument('--l1',type=str,help='Code for language 1')
+    parser.add_argument('--l2',type=str,help='Code for language 2')
     args = parser.parse_args()
-    create_pseudo_translation(args.mono,args.dict_path,args.outfile)
+    create_pseudo_translation(args.mono,args.dict_path,args.outfile,args.transliterate,args.l1,args.l2)
