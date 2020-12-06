@@ -4,6 +4,7 @@ from dataloader import WikipediaTokenMapDataset, token_maps_collate
 from transformers import BertModel, AdamW, BertConfig
 from utils import load_BFTC_from_TF_ckpt
 import torch
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.nn import MSELoss
 import numpy as np
@@ -27,7 +28,21 @@ def seed_everything(seed):
        np.random.seed(seed)
        torch.manual_seed(seed)
 
-def train_loop(dl, model, model_orig, optimizer, device, epoch,ckpt,print_every):
+def ctrstv_loss(src_emb,tgt_emb,weights,goal,T=0.1):
+    weights = weights.view(-1)
+    tgt_emb = tgt_emb.transpose(0,1)
+    sim = torch.matmul(src_emb,tgt_emb)
+    sim = sim/src_emb.norm(dim=1,keepdim=True)
+    sim = sim/tgt_emb.norm(dim=0,keepdim=True)
+    sim =  sim/T
+    fwd_logits = F.log_softmax(sim,dim=-1)
+    bwd_logits = F.log_softmax(sim.transpose(0,1),dim=-1)
+    loss = (F.nll_loss(fwd_logits,goal,weight=weights) + F.nll_loss(bwd_logits,goal,weight=weights))/2
+    return loss
+
+
+
+def train_loop(dl, model, model_orig, optimizer, device, loss_type, T, epoch,ckpt,print_every):
     tracker = xm.RateTracker()
     model.train()
     xm.master_print("Epoch ",epoch,"/",10)
@@ -42,7 +57,14 @@ def train_loop(dl, model, model_orig, optimizer, device, epoch,ckpt,print_every)
         tracker.add(batch_size)
         flat_embeddings_1 = embeddings_1.view(-1,hidden_size)
         flat_embeddings_2 = embeddings_2.view(-1,hidden_size)
-        loss = loss_fn(flat_embeddings_1[flat_maps_1]*weights_1,flat_embeddings_2[flat_maps_2]*weights_2)
+        if loss_type == 'mse':
+            loss = loss_fn(flat_embeddings_1[flat_maps_1]*weights_1,flat_embeddings_2[flat_maps_2]*weights_2)
+            """Tried to run the code below, but the training was exceptionally slow. This is probably because of dynamic shapes
+            See https://github.com/pytorch/xla/blob/master/TROUBLESHOOTING.md#known-performance-caveats"""
+            # loss = loss_fn(flat_embeddings_1[flat_maps_1[flat_maps_1>0]],flat_embeddings_2[flat_maps_2[flat_maps_2>0]])
+        elif loss_type == 'cstv':
+            goal = torch.arange(batch_size*max_length).to(device)
+            loss = ctrstv_loss(flat_embeddings_1,flat_embeddings_2,weights_1,goal,T)
         loss += loss_fn(embeddings_1,embeddings_orig_1)
         loss += loss_fn(embeddings_2,embeddings_orig_2)
         loss.backward()
@@ -60,7 +82,7 @@ def train_loop(dl, model, model_orig, optimizer, device, epoch,ckpt,print_every)
 
 
 
-def train(index,dataset,batch_size,model,model_orig,ckpt,seed,epochs,print_every):
+def train(index,dataset,batch_size,model,model_orig,ckpt,loss_type,T,seed,epochs,print_every):
     seed_everything(seed)
     device = xm.xla_device()
     
@@ -93,7 +115,7 @@ def train(index,dataset,batch_size,model,model_orig,ckpt,seed,epochs,print_every
     # mse_loss = MSELoss()
     for epoch in range(epochs):
         para_token_map_dl = pl.ParallelLoader(token_map_dl,[device]).per_device_loader(device)
-        train_loop(para_token_map_dl,model,model_orig, optim,device,epoch,ckpt,print_every)
+        train_loop(para_token_map_dl,model,model_orig, optim,device,loss_type,T,epoch,ckpt,print_every)
         
 
 
@@ -106,6 +128,8 @@ if __name__ == "__main__":
     parser.add_argument('--is_tf',action='store_true',default='',help='Whether the model is trained using TF or PyTorch')
     parser.add_argument('--ckpt',type=str,help='Path where model is to be saved')
     parser.add_argument('--bert_config',type=str,help='Path to BERT config file')
+    parser.add_argument('--loss_type',type=str,help='Type of alignment loss',choices=['mse','cstv'])
+    parser.add_argument('--temperature',type=float,default=0.1,help='Temperature for contrastive loss')
     parser.add_argument('--seed',type=int,default=1234,help='Random seed')
     parser.add_argument('--num_epochs',type=int,default=10,help='Number of epochs for training')
     parser.add_argument('--print_every',type=int,default=100)
@@ -124,7 +148,7 @@ if __name__ == "__main__":
     else:
         model = BertModel.from_pretrained('bert-base-multilingual-cased')
         model_orig = BertModel.from_pretrained('bert-base-multilingual-cased')
-    xmp.spawn(train,args=(token_map_dataset,args.batch_size,model,model_orig,args.ckpt,args.seed,args.num_epochs,args.print_every),nprocs=8,start_method='fork')
+    xmp.spawn(train,args=(token_map_dataset,args.batch_size,model,model_orig,args.ckpt,args.loss_type,args.temperature,args.seed,args.num_epochs,args.print_every),nprocs=8,start_method='fork')
 
 
         
