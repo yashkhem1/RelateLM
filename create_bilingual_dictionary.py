@@ -5,7 +5,14 @@ import pickle
 import argparse
 from indictrans import Transliterator
 
-def get_bilingual_dictionary(bilingual,o1,o2,l1,l2,transliterate,trans_lang,include_wiktionary,choose_random=True):
+def get_bilingual_dictionary(bilingual,o1,o2,l1,l2,transliterate,trans_lang,include_wiktionary,choose='first',freq_1=None,freq_2=None):
+    if choose == 'weighted':
+        freqs_1 = pickle.load(open(freq_1,'rb'))
+        freqs_2 = pickle.load(open(freq_2,'rb'))
+    else:
+        freqs_1 = None
+        freqs_2 = None
+    
     l1_l2_dict = {}
     l2_l1_dict = {}
     trn = None
@@ -33,9 +40,9 @@ def get_bilingual_dictionary(bilingual,o1,o2,l1,l2,transliterate,trans_lang,incl
             if "wiktionary.txt" in files:
                 files.remove("wiktionary.txt")
             if i == 0:
-                populate_dict(dir_,files,l1_l2_dict,l2_l1_dict,True,transliterate,trn,tl[i],False)
+                populate_dict(dir_,files,l1_l2_dict,l2_l1_dict,True,transliterate,trn,tl[i],False,choose,freqs_2)
             else:
-                populate_dict(dir_,files,l2_l1_dict,l1_l2_dict,True,transliterate,trn,tl[i],False)
+                populate_dict(dir_,files,l2_l1_dict,l1_l2_dict,True,transliterate,trn,tl[i],False,choose,freqs_1)
     
     if include_wiktionary:
         for i,dir_ in enumerate(bilingual):
@@ -43,9 +50,9 @@ def get_bilingual_dictionary(bilingual,o1,o2,l1,l2,transliterate,trans_lang,incl
             if "wiktionary.txt" in files:
                 files = ["wiktionary.txt"]
                 if i == 0:
-                    populate_dict(dir_,files,l1_l2_dict,l2_l1_dict,False,transliterate,trn,tl[i],True)
+                    populate_dict(dir_,files,l1_l2_dict,l2_l1_dict,False,transliterate,trn,tl[i],True,choose,freqs_2)
                 else:
-                    populate_dict(dir_,files,l2_l1_dict,l1_l2_dict,False,transliterate,trn,tl[i],True)
+                    populate_dict(dir_,files,l2_l1_dict,l1_l2_dict,False,transliterate,trn,tl[i],True,choose,freqs_1)
         
 
     
@@ -58,7 +65,7 @@ def get_bilingual_dictionary(bilingual,o1,o2,l1,l2,transliterate,trans_lang,incl
     with open(o2,'wb') as w:
         pickle.dump(l2_l1_dict,w)
 
-def populate_dict(dir_,files,dict_1,dict_2,can_replace=False,transliterate=False,trn=None,trans_lang=1,already_trans=False,choose_random=True):
+def populate_dict(dir_,files,dict_1,dict_2,can_replace=False,transliterate=False,trn=None,trans_lang=1,already_trans=False,choose='first',freqs=None):
     for file_ in files:
         with open(os.path.join(dir_,file_),encoding='utf-8') as f:
             lines = f.readlines()
@@ -72,16 +79,24 @@ def populate_dict(dir_,files,dict_1,dict_2,can_replace=False,transliterate=False
                 l2_words = trn.transform(l2_words)
 
             l2_words = l2_words.split(" ")
-            if choose_random:
-                l2_word = l2_words[0].strip()
-            
-            if l1_word and l2_word and ((l1_word not in dict_1) or can_replace):
-                dict_1[l1_word] = l2_word
-            
-            for word in l2_words:
-                word = word.strip()
-                if word and l1_word and (word not in dict_2):
-                    dict_2[word] = l1_word
+            l2_words = [x.strip() for x in l2_words if x.strip()]
+            if l1_word and (len(l2_words) > 0):
+                if (l1_word not in dict_1) or can_replace:
+                    if choose == 'first':
+                        l1_l2_words = [l2_words[0]]
+                        l1_l2_probs = [1.0]
+                    elif choose == 'random':
+                        l1_l2_words = l2_words
+                        l1_l2_probs = [1/len(l2_words)]*len(l2_words)
+                    elif choose == 'weighted':
+                        l1_l2_words = l2_words
+                        l1_l2_probs = [freqs[x]+1 if x in freqs else 1 for x in l2_words]
+
+                    dict_1[l1_word] = [l1_l2_words, l1_l2_probs]
+                
+                for word in l2_words:
+                    if(word not in dict_2):
+                        dict_2[word] = [[l1_word],[1.0]]
 
 
 
@@ -95,5 +110,8 @@ if __name__ == "__main__":
     parser.add_argument('--transliterate',action='store_true',help='Transliterate to other language')
     parser.add_argument('--trans_lang',type=str,help='Output language script',choices=['l1','l2'],default='l1')
     parser.add_argument('--include_wiktionary',action='store_true',help='Whether to include wiktionary mappings as well')
+    parser.add_argument('--choose',type=str,help='Method to choose multiple words from bilingual lexicon',choices=['first','random','weighted'])
+    parser.add_argument('--freq_1',type=str,help='Path to frequency file for l1')
+    parser.add_argument('--freq_2',type=str,help='Path to frequency file for l2')
     args = parser.parse_args()
-    get_bilingual_dictionary(args.bilingual,args.o1,args.o2,args.l1,args.l2,args.transliterate,args.trans_lang,args.include_wiktionary)
+    get_bilingual_dictionary(args.bilingual,args.o1,args.o2,args.l1,args.l2,args.transliterate,args.trans_lang,args.include_wiktionary,args.choose,args.freq_1, args.freq_2)

@@ -88,7 +88,10 @@ def top_k_translation(freq_file,dict_path,outfile,k=1000,translated=False):
     with open(outfile,'w') as w:
         for (word,freq) in word_freqs:
             if (translated and (word in dictionary)) or (not translated and (word not in dictionary)):
-                w.write(word+":"+str(freq)+"\n")
+                if translated:
+                    w.write(word+":"+dictionary[word]+':'+str(freq)+"\n")
+                else:
+                    w.write(word+':'+str(freq)+"\n")
                 i+=1
                 if i == k:
                     break
