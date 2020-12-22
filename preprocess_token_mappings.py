@@ -40,7 +40,7 @@ def tokenize_with_mappings(l1,l2,tokenizer,word_mapping = None):
     return token_ids_l1, token_ids_l2, token_maps_l1, token_maps_l2
 
 
-def preprocess_with_mappings(file1,file2,outfile,max_length,tokenizer,document_information=True,word_mapping = None):
+def preprocess_with_mappings(file1,file2,outfile,max_length,tokenizer,cls_id,sep_id,document_information=True,word_mapping = None):
     with open(file1,'r') as f1:
         with open(file2,'r') as f2:
             lines_1 = f1.readlines()
@@ -55,8 +55,8 @@ def preprocess_with_mappings(file1,file2,outfile,max_length,tokenizer,document_i
         pair = next(lines_zip,None)
         i=0
         first = 1
-        ids_1 = [101]
-        ids_2 = [101]
+        ids_1 = [cls_id]
+        ids_2 = [cls_id]
         tok_maps_1 = []
         tok_maps_2 = []
         while pair:
@@ -66,8 +66,8 @@ def preprocess_with_mappings(file1,file2,outfile,max_length,tokenizer,document_i
                 assert(len(token_maps_l1)==len(token_maps_l2))
                 if (len(ids_1) + len(token_ids_l1) >= max_length) or (len(ids_2) + len(token_ids_l2) >= max_length) or not line1.strip():
                     if not (len(ids_1)==1 or len(ids_2)==1):
-                        ids_1 += [102]+[0]*(max_length-len(ids_1)-1)
-                        ids_2 += [102]+[0]*(max_length-len(ids_2)-1)
+                        ids_1 += [sep_id]+[0]*(max_length-len(ids_1)-1)
+                        ids_2 += [sep_id]+[0]*(max_length-len(ids_2)-1)
                         tok_maps_1 += [0]*(max_length-len(tok_maps_1))
                         tok_maps_2 += [0]*(max_length-len(tok_maps_2))
                         if first:
@@ -102,8 +102,8 @@ def preprocess_with_mappings(file1,file2,outfile,max_length,tokenizer,document_i
                         bar.update(i)
                         i+=1
                     
-                    ids_1 = [101]
-                    ids_2 = [101]
+                    ids_1 = [cls_id]
+                    ids_2 = [cls_id]
                     tok_maps_1 = []
                     tok_maps_2 = []
                 
@@ -127,9 +127,11 @@ if __name__ == "__main__":
     parser.add_argument("--vocab_file",type=str,help='Path to vocabulary file')
     parser.add_argument("--max_length",type=int,help="Maximum number of tokens in a sentence")
     parser.add_argument("--outfile",type=str,help="Path to output json file")
+    parser.add_argument("--cls",type=int,default=40001,help="index for CLS token")
+    parser.add_argument("--sep",type=int,default=40002,help="index for SEP token")
     args = parser.parse_args()
-    tokenizer = BertWordPieceTokenizer(args.vocab_file,lowercase=False)
-    preprocess_with_mappings(args.mono,args.translated,args.outfile,args.max_length,tokenizer)
+    tokenizer = BertWordPieceTokenizer(args.vocab_file,lowercase=False,strip_accents=False)
+    preprocess_with_mappings(args.mono,args.translated,args.outfile,args.max_length,tokenizer,args.cls,args.sep)
                     
 
 

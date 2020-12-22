@@ -47,7 +47,7 @@ def train_loop(dl, model, model_orig, optimizer, device, loss_type, T, epoch,ckp
     model.train()
     xm.master_print("Epoch ",epoch,"/",10)
     loss_fn = MSELoss()
-    for i,(tok_ids_1,tok_ids_2,flat_maps_1,flat_maps_2, att_masks_1, att_masks_2,weights_1, weights_2) in enumerate(dl):
+    for i,(tok_ids_1,tok_ids_2,flat_maps_1,flat_maps_2, att_masks_1, att_masks_2,weights) in enumerate(dl):
         optimizer.zero_grad()
         embeddings_1 = model(input_ids = tok_ids_1, attention_mask= att_masks_1)[0]
         embeddings_2 = model(input_ids = tok_ids_2, attention_mask= att_masks_2)[0]
@@ -58,13 +58,13 @@ def train_loop(dl, model, model_orig, optimizer, device, loss_type, T, epoch,ckp
         flat_embeddings_1 = embeddings_1.view(-1,hidden_size)
         flat_embeddings_2 = embeddings_2.view(-1,hidden_size)
         if loss_type == 'mse':
-            loss = loss_fn(flat_embeddings_1[flat_maps_1]*weights_1,flat_embeddings_2[flat_maps_2]*weights_2)
+            loss = loss_fn(flat_embeddings_1[flat_maps_1]*weights,flat_embeddings_2[flat_maps_2]*weights)*(weights.sum()/weights.shape[0])
             """Tried to run the code below, but the training was exceptionally slow. This is probably because of dynamic shapes
             See https://github.com/pytorch/xla/blob/master/TROUBLESHOOTING.md#known-performance-caveats"""
             # loss = loss_fn(flat_embeddings_1[flat_maps_1[flat_maps_1>0]],flat_embeddings_2[flat_maps_2[flat_maps_2>0]])
         elif loss_type == 'cstv':
             goal = torch.arange(batch_size*max_length).to(device)
-            loss = ctrstv_loss(flat_embeddings_1,flat_embeddings_2,weights_1,goal,T)
+            loss = ctrstv_loss(flat_embeddings_1,flat_embeddings_2,weights,goal,T)
         loss += loss_fn(embeddings_1,embeddings_orig_1)
         loss += loss_fn(embeddings_2,embeddings_orig_2)
         loss.backward()
@@ -72,7 +72,7 @@ def train_loop(dl, model, model_orig, optimizer, device, loss_type, T, epoch,ckp
         
         if (i+1)%print_every == 0:
             xm.master_print('[xla:{}], Loss: {}, Iteration: {}, Time:{}s, Rate={:.2f}, GlobalRate={:.2f}'.format(xm.get_ordinal(), loss.item(), str(i+1), time.asctime(), tracker.rate(), tracker.global_rate() ),flush=True)
-        del tok_ids_1, tok_ids_2, flat_maps_1, flat_maps_2, att_masks_1, att_masks_2, weights_1, weights_2, flat_embeddings_1, flat_embeddings_2, embeddings_1, embeddings_2, embeddings_orig_1, embeddings_orig_2
+        del tok_ids_1, tok_ids_2, flat_maps_1, flat_maps_2, att_masks_1, att_masks_2, weights, flat_embeddings_1, flat_embeddings_2, embeddings_1, embeddings_2, embeddings_orig_1, embeddings_orig_2
         del loss
 
     xm.save(model.state_dict(), ckpt)
@@ -128,7 +128,7 @@ if __name__ == "__main__":
     parser.add_argument('--is_tf',action='store_true',default='',help='Whether the model is trained using TF or PyTorch')
     parser.add_argument('--ckpt',type=str,help='Path where model is to be saved')
     parser.add_argument('--bert_config',type=str,help='Path to BERT config file')
-    parser.add_argument('--loss_type',type=str,help='Type of alignment loss',choices=['mse','cstv'])
+    parser.add_argument('--loss_type',type=str,help='Type of alignment loss',choices=['mse','cstv'], default='mse')
     parser.add_argument('--temperature',type=float,default=0.1,help='Temperature for contrastive loss')
     parser.add_argument('--seed',type=int,default=1234,help='Random seed')
     parser.add_argument('--num_epochs',type=int,default=10,help='Number of epochs for training')

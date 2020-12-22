@@ -109,12 +109,11 @@ def token_maps_collate(batch):
     att_masks_1 = (tok_ids_1>0).type(torch.long)
     att_masks_2 = (tok_ids_2>0).type(torch.long)
     batch_size,max_len = tok_ids_1.size()
-    weights_1 = (tok_maps_1>0).view(-1,1).type(torch.float)
-    weights_2 = (tok_maps_2>0).view(-1,1).type(torch.float)
+    weights = (tok_maps_1>0).view(-1,1).type(torch.float)
     flat_maps_1 = (tok_maps_1 + max_len*(torch.arange(batch_size).view(-1,1))).view(-1).type(torch.long)
     flat_maps_2 = (tok_maps_2 + max_len*(torch.arange(batch_size).view(-1,1))).view(-1).type(torch.long)
     del tok_maps_1, tok_maps_2
-    return tok_ids_1, tok_ids_2, flat_maps_1, flat_maps_2, att_masks_1, att_masks_2, weights_1, weights_2
+    return tok_ids_1, tok_ids_2, flat_maps_1, flat_maps_2, att_masks_1, att_masks_2, weights
     
 if __name__=="__main__":
     # dataset = BilingualWithNegativeSampling(['preprocessed_data/Hindi_Punjabi_trans_Hindi_bilingual.json'],2)
