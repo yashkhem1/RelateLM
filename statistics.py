@@ -5,6 +5,9 @@ import progressbar
 import argparse
 import pickle
 import string
+from transformers import BertModel, BertConfig
+from prettytable import PrettyTable
+import numpy as np
 
 
 def get_pseudo_translation_statistics(mono,dict_path,outfile):
@@ -96,6 +99,67 @@ def top_k_translation(freq_file,dict_path,outfile,k=1000,translated=False):
                 if i == k:
                     break
 
+def display_parameters(model_path, bert_config):
+    config = BertConfig.from_json_file(bert_config)
+    model = BertModel.from_pretrained(model_path,config=config)
+    def count_parameters(model):
+        table = PrettyTable(["Modules", "Parameters"])
+        total_params = 0
+        for name, parameter in model.named_parameters():
+            if not parameter.requires_grad: continue
+            param = parameter.numel()
+            table.add_row([name, param])
+            total_params+=param
+        print(table)
+        print(f"Total Trainable Params: {total_params}")
+        return total_params
+    count_parameters(model)
+
+def compare_transliteration_translation(dict1_path,dict2_path,outfile,choose='first'):
+    same_words = set()
+    with open(dict1_path,'rb') as f:
+        dict1 = pickle.load(f)
+    with open(dict2_path,'rb') as f:
+        dict2 = pickle.load(f)
+    for dict_ in [dict1,dict2]:
+        for key in dict_:
+            translation_words = dict_[key][0]
+            word_probs = np.array(dict_[key][1])
+            if choose=="first":
+                translation = translation_words[0]
+            elif choose=="max":
+                translation = translation_words[np.argmax(word_probs)]
+            elif choose=="any":
+                translation = key if key in translation_words else translation_words[0]
+                
+            if  key.strip() and translation.strip()==key.strip():
+                same_words.add(key)
+
+    print("Number of words for which translation is same as transliteration:",len(same_words))
+    with open(outfile,'w') as w:
+        for word in same_words:
+            w.write(word+'\n')
+
+def compare_vocab_freq(vocab_path,freq_files,outfile,start_index,end_index):
+    whole_words = set()
+    with open(vocab_path,'r') as f:
+        vocab = f.readlines()
+    vocab = [x.strip() for x in vocab]
+    if start_index!=-1:
+        vocab = vocab[start_index:]
+    if end_index!=-1:
+        vocab = vocab[:end_index]
+    for freq_file in freq_files:
+        print("Frequency File:",freq_file)
+        with open(freq_file,'rb') as f:
+            freqs = pickle.load(f)
+        for word in vocab:
+            if word in freqs:
+                whole_words.add(word)
+    print("Number of whole words in vocabulary:",len(whole_words))
+    with open(outfile,'w') as w:
+        for word in whole_words:
+            w.write(word+'\n')
 
 
 if __name__ == "__main__":
@@ -105,8 +169,15 @@ if __name__ == "__main__":
     parser.add_argument('--translation',type=str,help='Path to translation file')
     parser.add_argument('--stats',type=str,help='Statistics type')
     parser.add_argument('--outfile',type=str,help='Path to output file')
-    parser.add_argument('--freq_file',type=str,help='Path to file containing frequency dictionary')
+    parser.add_argument('--freq_files',type=str,nargs='+',help='Path to file containing frequency dictionary')
     parser.add_argument('--k',type=int,help='Top k elements')
+    parser.add_argument('--model_path',type=str,help='Path to saved model')
+    parser.add_argument('--bert_config',type=str,help='Path to BERT config')
+    parser.add_argument('--dict2_path',type=str,help='Path to dictionary 2')
+    parser.add_argument('--choose',type=str,help='Method to choose dictionary translation')
+    parser.add_argument('--vocab_file',type=str,help='Path to vocab file')
+    parser.add_argument('--vocab_start_index',type=int,default=-1,help='Starting index of vocaublary')
+    parser.add_argument('--vocab_end_index',type=int,default=-1,help='End index of vocabulary')
 
     args = parser.parse_args()
     if args.stats == 'pseudo_translation':
@@ -114,9 +185,15 @@ if __name__ == "__main__":
     elif args.stats == 'word_freq':
         word_frequencies(args.mono,args.outfile)
     elif args.stats == 'top_k_translated':
-        top_k_translation(args.freq_file,args.dict_path,args.outfile,args.k,True)
+        top_k_translation(args.freq_files[0],args.dict_path,args.outfile,args.k,True)
     elif args.stats == 'top_k_not_translated':
-        top_k_translation(args.freq_file,args.dict_path,args.outfile,args.k,False)
+        top_k_translation(args.freq_files[0],args.dict_path,args.outfile,args.k,False)
+    elif args.stats == 'disp_params':
+        display_parameters(args.model_path,args.bert_config)
+    elif args.stats == 'compare_trans':
+        compare_transliteration_translation(args.dict_path,args.dict2_path,args.outfile,args.choose)
+    elif args.stats == 'whole_words_vocab':
+        compare_vocab_freq(args.vocab_file,args.freq_files,args.outfile,args.vocab_start_index,args.vocab_end_index)
     
     
 
