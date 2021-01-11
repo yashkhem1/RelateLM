@@ -8,25 +8,30 @@ from indictrans import Transliterator
 def get_bilingual_dictionary(bilingual,o1,o2,l1,l2,transliterate,trans_lang,include_wiktionary,freq_1,freq_2):
     freqs_1 = pickle.load(open(freq_1,'rb'))
     freqs_2 = pickle.load(open(freq_2,'rb'))
-    
+
     l1_l2_dict = {}
     l2_l1_dict = {}
     trn = None
 
-    if trans_lang == 'l1':
-        tl = [1,2]
-        if transliterate:
-            trn = Transliterator(source=l2,target=l1,build_lookup=True)
-        else:
-            trn = Transliterator(source=l1,target=l2,build_lookup=True)
-    else:
-        tl = [2,1]
-        if transliterate:
-            trn = Transliterator(source=l1,target=l2,build_lookup=True)
-        else:
+    if transliterate:
+        if trans_lang == 'l1':
             trn = Transliterator(source=l2,target=l1,build_lookup=True)
 
-    
+        elif trans_lang == 'l2':
+            trn = Transliterator(source=l1,target=l2,build_lookup=True)
+
+    elif l1 == "hin":
+            trn = Transliterator(source=l1,target=l2,build_lookup=True)
+
+    elif l2 == "hin":
+            trn = Transliterator(source=l2,target=l1,build_lookup=True)
+
+    freqs = [freqs_2,freqs_1]
+    dict_1 = [l1_l2_dict,l2_l1_dict]
+    dict_2 = [l2_l1_dict,l1_l2_dict]
+    l1_bool = [True,False]
+    l2_bool = [False,True]
+
     for i,dir_ in enumerate(bilingual):
         if not os.path.exists(dir_):
             print("Directory {} not present".format(dir_))
@@ -35,23 +40,40 @@ def get_bilingual_dictionary(bilingual,o1,o2,l1,l2,transliterate,trans_lang,incl
             files = os.listdir(dir_)
             if "wiktionary.txt" in files:
                 files.remove("wiktionary.txt")
-            if i == 0:
-                populate_dict(dir_,files,l1_l2_dict,l2_l1_dict,True,transliterate,trn,tl[i],False,freqs_2)
+
+            if trans_lang == "l1" and transliterate:
+                populate_dict(dir_,files,dict_1[i],dict_2[i],True,not l1_bool[i],not l2_bool[i],trn,freqs[i])
+
+            elif trans_lang == "l2" and transliterate:
+                populate_dict(dir_,files,dict_1[i],dict_2[i],True,l1_bool[i],l2_bool[i],trn,freqs[i])
+
             else:
-                populate_dict(dir_,files,l2_l1_dict,l1_l2_dict,True,transliterate,trn,tl[i],False,freqs_1)
-    
+                populate_dict(dir_,files,dict_1[i],dict_2[i],True,False,False,trn,freqs[i])
+
     if include_wiktionary:
+        #This will always have one of the languages as Hindi
+        #The logic can be made less complicated if "wiktionary.txt" keys can be transliterated to their original script
+        #but we don't want any information loss due to transliteration.
         for i,dir_ in enumerate(bilingual):
             files = os.listdir(dir_)
             if "wiktionary.txt" in files:
                 files = ["wiktionary.txt"]
-                if i == 0:
-                    populate_dict(dir_,files,l1_l2_dict,l2_l1_dict,False,transliterate,trn,tl[i],True,freqs_2)
-                else:
-                    populate_dict(dir_,files,l2_l1_dict,l1_l2_dict,False,transliterate,trn,tl[i],True,freqs_1)
-        
 
-    
+                if transliterate:
+                    if (trans_lang == "l1" and l1 != "hin") or (trans_lang == "l2" and l2 != "hin"):
+                        populate_dict(dir_,files,dict_1[i],dict_2[i],False,True,True,trn,freqs[i])
+
+                    else:
+                        populate_dict(dir_,files,dict_1[i],dict_2[i],False,False,False,trn,freqs[i])
+
+                else:
+                    if l1 == "hin":
+                        populate_dict(dir_,files,dict_1[i],dict_2[i],False,not l1_bool[i], not l2_bool[i],trn,freqs[i])
+
+                    else:
+                        populate_dict(dir_,files,dict_1[i],dict_2[i],False,l1_bool[i],l2_bool[i],trn,freqs[i])
+
+
     print("Size of",l1,"-",l2,"dictionary:",len(l1_l2_dict.keys()))
     print("Size of",l2,"-",l1,"dictionary:",len(l2_l1_dict.keys()))
 
@@ -61,17 +83,17 @@ def get_bilingual_dictionary(bilingual,o1,o2,l1,l2,transliterate,trans_lang,incl
     with open(o2,'wb') as w:
         pickle.dump(l2_l1_dict,w)
 
-def populate_dict(dir_,files,dict_1,dict_2,can_replace=False,transliterate=False,trn=None,trans_lang=1,already_trans=False,freqs=None):
+def populate_dict(dir_,files,dict_1,dict_2,can_replace=False,trans_l1=False,trans_l2=False,trn=None,freqs=None):
     for file_ in files:
         with open(os.path.join(dir_,file_),encoding='utf-8') as f:
             lines = f.readlines()
         for line in lines:
             l1_word = line.split(":")[0]
-            if (transliterate and trans_lang == 2 and not already_trans) or (not transliterate and trans_lang == 2 and already_trans):
+            if trans_l1:
                 l1_word = trn.transform(l1_word)
 
             l2_words = line.split(":")[1][1:]
-            if (transliterate and trans_lang == 1 and not already_trans) or (not transliterate and trans_lang == 1 and already_trans):
+            if trans_l2:
                 l2_words = trn.transform(l2_words)
 
             l2_words = l2_words.split(" ")
@@ -81,7 +103,7 @@ def populate_dict(dir_,files,dict_1,dict_2,can_replace=False,transliterate=False
                     l1_l2_words = l2_words
                     l1_l2_freqs = [freqs[x]+1 if x in freqs else 1 for x in l2_words]
                     dict_1[l1_word] = [l1_l2_words, l1_l2_freqs]
-                
+
                 for word in l2_words:
                     if(word not in dict_2):
                         dict_2[word] = [[l1_word],[1.0]]
