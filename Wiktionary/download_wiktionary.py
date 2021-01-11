@@ -9,7 +9,7 @@ url_dict = {}
 url_dict['Hindi-Hindi'] = 'https://hi.wiktionary.org/wiki/%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80_%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80_%E0%A4%B6%E0%A4%AC%E0%A5%8D%E0%A4%A6%E0%A4%95%E0%A5%8B%E0%A4%B6'
 url_dict['Sanskrit-Hindi'] = 'https://hi.wiktionary.org/wiki/%E0%A4%B5%E0%A4%BF%E0%A4%95%E0%A5%8D%E0%A4%B7%E0%A4%A8%E0%A4%B0%E0%A5%80:%E0%A4%B8%E0%A4%82%E0%A4%B8%E0%A5%8D%E0%A4%95%E0%A5%83%E0%A4%A4-%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80_%E0%A4%B6%E0%A4%AC%E0%A5%8D%E0%A4%A6%E0%A4%95%E0%A5%8B%E0%A4%B6'
 url_dict['Pali-Hindi'] = 'https://hi.wiktionary.org/wiki/%E0%A4%B5%E0%A4%BF%E0%A4%95%E0%A5%8D%E0%A4%B7%E0%A4%A8%E0%A4%B0%E0%A5%80:%E0%A4%AA%E0%A4%BE%E0%A4%B2%E0%A4%BF-%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80_%E0%A4%B6%E0%A4%AC%E0%A5%8D%E0%A4%A6%E0%A4%95%E0%A5%8B%E0%A4%B6'
-url_dict['Bengali-Hindi'] = 'https://hi.wiktionary.org/wiki/%E0%A4%AC%E0%A4%82%E0%A4%97%E0%A5%8D%E0%A4%B2%E0%A4%BE-%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80_%E0%A4%B6%E0%A4%AC%E0%A5%8D%E0%A4%A6%E0%A4%95%E0%A5%8B%E0%A4%B6'
+url_dict['Bengali-Hindi'] = 'https://hi.wiktionary.org/wiki/%E0%A4%B5%E0%A4%BF%E0%A4%95%E0%A5%8D%E0%A4%B7%E0%A4%A8%E0%A4%B0%E0%A5%80:%E0%A4%AC%E0%A4%BE%E0%A4%82%E0%A4%97%E0%A5%8D%E0%A4%B2%E0%A4%BE-%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80_%E0%A4%B6%E0%A4%AC%E0%A5%8D%E0%A4%A6%E0%A4%95%E0%A5%8B%E0%A4%B6'
 url_dict['Marathi-Hindi'] = 'https://hi.wiktionary.org/wiki/%E0%A4%AE%E0%A4%B0%E0%A4%BE%E0%A4%A0%E0%A5%80-%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80_%E0%A4%B6%E0%A4%AC%E0%A5%8D%E0%A4%A6%E0%A4%95%E0%A5%8B%E0%A4%B6'
 url_dict['Gujarati-Hindi'] = 'https://hi.wiktionary.org/wiki/%E0%A4%B5%E0%A4%BF%E0%A4%95%E0%A5%8D%E0%A4%B7%E0%A4%A8%E0%A4%B0%E0%A5%80:%E0%A4%97%E0%A5%81%E0%A4%9C%E0%A4%B0%E0%A4%BE%E0%A4%A4%E0%A5%80_%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80_%E0%A4%B6%E0%A4%AC%E0%A5%8D%E0%A4%A6%E0%A4%95%E0%A5%8B%E0%A4%B6'
 url_dict['Hindi-Telugu'] = 'https://hi.wiktionary.org/wiki/%E0%A4%B5%E0%A4%BF%E0%A4%95%E0%A5%8D%E0%A4%B7%E0%A4%A8%E0%A4%B0%E0%A5%80:%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80-%E0%A4%A4%E0%A5%87%E0%A4%B2%E0%A5%81%E0%A4%97%E0%A5%81_%E0%A4%B5%E0%A5%8D%E0%A4%AF%E0%A4%BE%E0%A4%B5%E0%A4%B9%E0%A4%BE%E0%A4%B0%E0%A4%BF%E0%A4%95_%E0%A4%B2%E0%A4%98%E0%A5%81_%E0%A4%95%E0%A5%8B%E0%A4%B6'
@@ -51,6 +51,18 @@ def download_guj_hin():
     with open('Gujarati-Hindi.txt','w') as f:
         f.writelines(lines)
 
+def download_ben_hin():
+    url = url_dict['Bengali-Hindi']
+    print(url)
+    lines = []
+    page_ = requests.get(url)
+    soup_ = BeautifulSoup(page_.content,'html.parser')
+    data = soup_.select('div.mw-parser-output p')
+    for datum in data:
+        lines.append(datum.text)
+    with open('Bengali-Hindi.txt','w') as f:
+        f.writelines(lines)
+
 #-------------------------------------------------------------------------------------------------------------------
 #----------------------------------------------Parsing----------------------------------------------------------
 #-------------------------------------------------------------------------------------------------------------------
@@ -79,10 +91,31 @@ def parse_guj_hin():
             l2_word = line.split('--')[1].split('//')[0].split(',')[0].strip().replace(" ","_")
             w.write(l1_word+": "+l2_word+"\n")
 
+def parse_ben_hin():
+    with open('Bengali-Hindi.txt','r') as f:
+        lines = f.readlines()
+    stop_words = ["१.","२.","$"]
+    with open('wiktionary.txt','w') as w:
+        for line in lines:
+            l1_word = line.split(",")[0].strip()
+            try:
+                l2_words = line.split(",")[2].strip().split("/")
+            except IndexError:
+                print(line)
+                continue
+            for s in stop_words:
+                l2_words = [x.replace(s,"").strip() for x in l2_words]
+            l2_words = [x[:x.find("{")].strip() for x in l2_words]
+            l2_words = [x for x in l2_words if x]
+            if len(l2_words):
+                w.write(l1_word+': '+" ".join(l2_words)+"\n")
+
 
 
 if __name__=="__main__":
     # download_pan_hin()
     # parse_pan_hin()
     # download_guj_hin()
-    parse_guj_hin()
+    # parse_guj_hin()
+    # download_ben_hin()
+    parse_ben_hin()
