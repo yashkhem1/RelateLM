@@ -19,7 +19,7 @@ def tokenize_with_mappings(l1,l2,tokenizer,word_mapping = None):
         words_l1 = l1.split(" ")
         words_l2 = l2.split(" ")
         index_l1 = 0
-        index_l2 = 0 
+        index_l2 = 0
         if (len(words_l1) != len(words_l2)):
             print(words_l1)
             print(words_l2)
@@ -51,7 +51,7 @@ def preprocess_with_mappings(file1,file2,outfile,max_length,tokenizer,cls_id,sep
     with open(outfile,'w') as w:
         _ = w.write('{\n')
         _ = w.write('\t"data":[\n')
-        lines_zip = zip(lines_1,lines_2) 
+        lines_zip = zip(lines_1,lines_2)
         pair = next(lines_zip,None)
         i=0
         first = 1
@@ -73,7 +73,7 @@ def preprocess_with_mappings(file1,file2,outfile,max_length,tokenizer,cls_id,sep
                         if first:
                             _ = w.write('\t\t{"token_ids_1":'+str(ids_1)+',"token_ids_2":'+str(ids_2)+',"token_maps_1":'+str(tok_maps_1)+',"token_maps_2":'+str(tok_maps_2)+'}')
                             first = 0
-                        
+
                         else:
                             _ = w.write(',\n\t\t{"token_ids_1":'+str(ids_1)+',"token_ids_2":'+str(ids_2)+',"token_maps_1":'+str(tok_maps_1)+',"token_maps_2":'+str(tok_maps_2)+'}')
 
@@ -88,7 +88,7 @@ def preprocess_with_mappings(file1,file2,outfile,max_length,tokenizer,cls_id,sep
                             bool_tok = token_maps_l2 < (max_length-2)
                         token_maps_l1 = token_maps_l1[bool_tok]
                         token_maps_l2 = token_maps_l2[bool_tok]
-                        tok_maps_1 += [x+len(ids_1) for x in token_maps_l1] 
+                        tok_maps_1 += [x+len(ids_1) for x in token_maps_l1]
                         tok_maps_2 += [x+len(ids_2) for x in token_maps_l2]
                         ids_1 += token_ids_l1
                         ids_2 += token_ids_l2
@@ -101,12 +101,12 @@ def preprocess_with_mappings(file1,file2,outfile,max_length,tokenizer,cls_id,sep
                         pair = next(lines_zip,None)
                         bar.update(i)
                         i+=1
-                    
+
                     ids_1 = [cls_id]
                     ids_2 = [cls_id]
                     tok_maps_1 = []
                     tok_maps_2 = []
-                
+
                 else:
                     tok_maps_1 += [x+len(ids_1) for x in token_maps_l1]
                     tok_maps_2 += [x+len(ids_2) for x in token_maps_l2]
@@ -127,13 +127,9 @@ if __name__ == "__main__":
     parser.add_argument("--vocab_file",type=str,help='Path to vocabulary file')
     parser.add_argument("--max_length",type=int,help="Maximum number of tokens in a sentence")
     parser.add_argument("--outfile",type=str,help="Path to output json file")
-    parser.add_argument("--cls",type=int,default=40001,help="index for CLS token")
-    parser.add_argument("--sep",type=int,default=40002,help="index for SEP token")
     args = parser.parse_args()
     tokenizer = BertWordPieceTokenizer(args.vocab_file,lowercase=False,strip_accents=False)
-    preprocess_with_mappings(args.mono,args.translated,args.outfile,args.max_length,tokenizer,args.cls,args.sep)
-                    
-
-
-
-    
+    cls_id = tokenizer.encode("[CLS]",add_special_tokens=False).ids[0]
+    sep_id = tokenizer.encode("[SEP]",add_special_tokens=False).ids[0]
+    print("CLS_ID:",cls_id,"SEP_ID:",sep_id)
+    preprocess_with_mappings(args.mono,args.translated,args.outfile,args.max_length,tokenizer,cls_id,sep_id)

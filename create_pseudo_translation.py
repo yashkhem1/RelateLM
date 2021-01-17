@@ -21,7 +21,7 @@ def create_pseudo_translation(mono,dict_path,outfile,replace='first',translitera
 
     if transliterate:
         trn = Transliterator(source=l1,target=l2,build_lookup=True)
-    
+
     with open(mono,'r') as f:
         lines = f.readlines()
     bar = progressbar.ProgressBar(max_value=len(lines),suffix="Number of lines translated: {variables.nlines}",
@@ -49,6 +49,9 @@ def create_pseudo_translation(mono,dict_path,outfile,replace='first',translitera
                     if replace=='prob':
                         translated = np.random.choice(translation_words,p=np.sqrt(word_probs)/np.sqrt(word_probs).sum()) + punct + nl
 
+                    elif replace=='problin':
+                        translated = np.random.choice(translation_words,p=word_probs/word_probs.sum()) + punct + nl
+
                     elif replace=='first':
                         translated = translation_words[0] + punct + nl
 
@@ -57,7 +60,7 @@ def create_pseudo_translation(mono,dict_path,outfile,replace='first',translitera
 
                     elif replace=='random':
                         translated = np.random.choice(translation_words) + punct + nl
-                    
+
                 else:
                     if transliterate:
                         trans_word = trn.transform(word)
@@ -67,7 +70,7 @@ def create_pseudo_translation(mono,dict_path,outfile,replace='first',translitera
                             translated = word + punct + nl
                     else:
                         translated = word + punct + nl
-                
+
                 translation+=translated+" "
 
             w.write(translation[:-1])
@@ -79,7 +82,7 @@ if __name__=="__main__":
     parser.add_argument('--mono',type=str,help='Path to monlingual data')
     parser.add_argument('--dict_path',type=str,help='Path to dictionary file')
     parser.add_argument('--outfile',type=str,help='Path to output file')
-    parser.add_argument('--replace',type=str,help='Method to replace dictionary matches',choices=['first','prob','max','random'])
+    parser.add_argument('--replace',type=str,help='Method to replace dictionary matches',choices=['first','prob','max','random','problin'])
     parser.add_argument('--transliterate',action='store_true',help='Transliterate to other script')
     parser.add_argument('--l1',type=str,help='Code for language 1')
     parser.add_argument('--l2',type=str,help='Code for language 2')
