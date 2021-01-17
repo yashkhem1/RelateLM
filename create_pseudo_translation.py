@@ -8,12 +8,20 @@ import progressbar
 import argparse
 from indictrans import Transliterator
 import numpy as np
+from create_normalised_dict import normaliser
 
-def create_pseudo_translation(mono,dict_path,outfile,replace='first',transliterate=False,l1='hin',l2='pan'):
+def create_pseudo_translation(mono,dict_path,outfile,replace='first',transliterate=False,l1='hin',l2='pan', norm=False, normalised_dict_path=None):
     if not os.path.exists(dict_path):
         print("Dictionary file is not present")
         return
     dictionary = pickle.load(open(dict_path,'rb'))
+
+    normalised_dictionary = None
+    if norm:
+        if not os.path.exists(normalised_dict_path):
+            print("Normalised Dictionary file is not present")
+            return
+        normalised_dictionary = pickle.load(open(normalised_dict_path,'rb'))
 
     if not os.path.exists(mono):
         print("Monolingual data doesn't exist")
@@ -42,9 +50,28 @@ def create_pseudo_translation(mono,dict_path,outfile,replace='first',translitera
                         word = word[:-1*len(punctuation)]
                         punct = punctuation
                         break
+
+                translation_present = False
+                normalised_word = normaliser(word)
+
                 if word in dictionary and  word not in ('\n',' ','',' \n'):
-                    translation_words = dictionary[word][0]
-                    word_probs = np.array(dictionary[word][1])
+                    translation_present = True
+                    translation_key = word
+                    translation_dict = dictionary
+
+                elif norm and normalised_word in dictionary and normalised_word not in ('\n',' ','','\n'):
+                    translation_present = True
+                    translation_key = normalised_word
+                    translation_dict = dictionary
+
+                elif norm and normalised_word in normalised_dictionary and normalised_word not in ('\n',' ','','\n'):
+                    translation_present = True
+                    translation_key = normalised_word
+                    translation_dict = normalised_dictionary
+
+                if translation_present:
+                    translation_words = translation_dict[translation_key][0]
+                    word_probs = np.array(translation_dict[translation_key][1])
 
                     if replace=='prob':
                         translated = np.random.choice(translation_words,p=np.sqrt(word_probs)/np.sqrt(word_probs).sum()) + punct + nl
@@ -86,5 +113,7 @@ if __name__=="__main__":
     parser.add_argument('--transliterate',action='store_true',help='Transliterate to other script')
     parser.add_argument('--l1',type=str,help='Code for language 1')
     parser.add_argument('--l2',type=str,help='Code for language 2')
+    parser.add_argument('--norm',action='store_true',help='Normalization of words')
+    parser.add_argument('--norm_dict_path',type=str,help='Path to normalized dictionary file')
     args = parser.parse_args()
-    create_pseudo_translation(args.mono,args.dict_path,args.outfile,args.replace,args.transliterate,args.l1,args.l2)
+    create_pseudo_translation(args.mono,args.dict_path,args.outfile,args.replace,args.transliterate,args.l1,args.l2, args.norm, args.norm_dict_path)
