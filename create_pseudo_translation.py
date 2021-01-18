@@ -9,8 +9,9 @@ import argparse
 from indictrans import Transliterator
 import numpy as np
 from create_normalised_dict import normaliser
+from tokenizers import BertWordPieceTokenizer
 
-def create_pseudo_translation(mono,dict_path,outfile,replace='first',transliterate=False,l1='hin',l2='pan', norm=False, normalised_dict_path=None):
+def create_pseudo_translation(mono,dict_path,outfile,replace='first',transliterate=False,l1='hin',l2='pan', norm=False, normalised_dict_path=None, tok=False, tokenizer=None):
     if not os.path.exists(dict_path):
         print("Dictionary file is not present")
         return
@@ -37,6 +38,11 @@ def create_pseudo_translation(mono,dict_path,outfile,replace='first',translitera
     print('Read Complete')
     with open(outfile,'w') as w:
         for i,line in enumerate(lines):
+            if tok:
+                line = line[:-1]
+                line = (" ".join(tokenizer.encode(line.replace(" "," *#* "),add_special_tokens = False).tokens)).replace('##'," ## ")
+                line += '\n'
+
             translation = ""
             for word in line.split(" "):
                 punct = ""
@@ -100,7 +106,10 @@ def create_pseudo_translation(mono,dict_path,outfile,replace='first',translitera
 
                 translation+=translated+" "
 
-            w.write(translation[:-1])
+            translation = translation[:-1]
+            if tok:
+                translation = translation.replace(" ","").replace("##", "").replace("*#*"," ")
+            w.write(translation)
             bar.update(i,nlines=str(i))
 
 
@@ -115,5 +124,11 @@ if __name__=="__main__":
     parser.add_argument('--l2',type=str,help='Code for language 2')
     parser.add_argument('--norm',action='store_true',help='Normalization of words')
     parser.add_argument('--norm_dict_path',type=str,help='Path to normalized dictionary file')
+    parser.add_argument('--tok',action='store_true',help='Tokenization of words')
+    parser.add_argument('--tok_vocab_path',type=str,help='Path to tokenization vocab file')
     args = parser.parse_args()
-    create_pseudo_translation(args.mono,args.dict_path,args.outfile,args.replace,args.transliterate,args.l1,args.l2, args.norm, args.norm_dict_path)
+    if args.tok:
+        tokenizer = BertWordPieceTokenizer(args.tok_vocab_path,lowercase=False,strip_accents=False)
+    else:
+        tokenizer = None
+    create_pseudo_translation(args.mono,args.dict_path,args.outfile,args.replace,args.transliterate,args.l1,args.l2, args.norm, args.norm_dict_path, args.tok, tokenizer)
