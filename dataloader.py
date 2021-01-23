@@ -55,7 +55,7 @@ class BilingualWithNegativeSampling(Dataset):
             for file_ in dict_files:
                 with open(file_,'r') as f:
                     try:
-                        dict_list += json.load(f)['data']     
+                        dict_list += json.load(f)['data']
                     except json.JSONDecodeError as err:
                         # grab a reasonable section, say 40 characters.
                         start, stop = max(0, err.pos - 20), err.pos + 20
@@ -94,7 +94,7 @@ class BilingualWithNegativeSampling(Dataset):
             item_list.append(torch.tensor(self.l1_tok_ids[neg_index],dtype=torch.long))
             item_list.append(torch.tensor(self.l2_tok_ids[neg_index],dtype=torch.long))
         return item_list
-        
+
 def custom_collate_fn(batch):
     sentences_1 = [x[0] for x in batch]
     sentences_2 = [x[1] for x in batch]
@@ -114,12 +114,11 @@ def token_maps_collate(batch):
     flat_maps_2 = (tok_maps_2 + max_len*(torch.arange(batch_size).view(-1,1))).view(-1).type(torch.long)
     del tok_maps_1, tok_maps_2
     return tok_ids_1, tok_ids_2, flat_maps_1, flat_maps_2, att_masks_1, att_masks_2, weights
-    
+
 if __name__=="__main__":
     # dataset = BilingualWithNegativeSampling(['preprocessed_data/Hindi_Punjabi_trans_Hindi_bilingual.json'],2)
-    dataset = WikipediaTokenMapDataset(['preprocessed_data/Hindi_Punjabi_trans_Hindi_wik.json'])
-    dl = DataLoader(dataset=dataset,batch_size=2,shuffle=False,collate_fn=token_maps_collate)
+    dataset = WikipediaTokenMapDataset(['preprocessed_data/guj_trans_hin_hin_wik.json'])
+    dl = DataLoader(dataset=dataset,batch_size=5,shuffle=False,collate_fn=token_maps_collate)
     for i,b in enumerate(dl):
         print(b)
         break
-    

@@ -13,7 +13,7 @@ import time
 
 import torch_xla.core.xla_model as xm
 import torch_xla.distributed.data_parallel as dp
-import torch_xla.distributed.xla_multiprocessing as xmp 
+import torch_xla.distributed.xla_multiprocessing as xmp
 import torch_xla.distributed.parallel_loader as pl
 import gc
 import argparse
@@ -29,11 +29,13 @@ def seed_everything(seed):
        torch.manual_seed(seed)
 
 def ctrstv_loss(src_emb,tgt_emb,weights,goal,T=0.1):
+    weight_mat = torch.matmul(weights,weights.transpose(0,1))*100-100
     weights = weights.view(-1)
     tgt_emb = tgt_emb.transpose(0,1)
     sim = torch.matmul(src_emb,tgt_emb)
     sim = sim/src_emb.norm(dim=1,keepdim=True)
     sim = sim/tgt_emb.norm(dim=0,keepdim=True)
+    sim += weight_mat
     sim =  sim/T
     fwd_logits = F.log_softmax(sim,dim=-1)
     bwd_logits = F.log_softmax(sim.transpose(0,1),dim=-1)
@@ -64,12 +66,12 @@ def train_loop(dl, model, model_orig, optimizer, device, loss_type, T, epoch,ckp
             # loss = loss_fn(flat_embeddings_1[flat_maps_1[flat_maps_1>0]],flat_embeddings_2[flat_maps_2[flat_maps_2>0]])
         elif loss_type == 'cstv':
             goal = torch.arange(batch_size*max_length).to(device)
-            loss = ctrstv_loss(flat_embeddings_1,flat_embeddings_2,weights,goal,T)
+            loss = ctrstv_loss(flat_embeddings_1[flat_maps_1],flat_embeddings_2[flat_maps_2],weights,goal,T)
         loss += loss_fn(embeddings_1,embeddings_orig_1)
         loss += loss_fn(embeddings_2,embeddings_orig_2)
         loss.backward()
         xm.optimizer_step(optimizer)
-        
+
         if (i+1)%print_every == 0:
             xm.master_print('[xla:{}], Loss: {}, Iteration: {}, Time:{}s, Rate={:.2f}, GlobalRate={:.2f}'.format(xm.get_ordinal(), loss.item(), str(i+1), time.asctime(), tracker.rate(), tracker.global_rate() ),flush=True)
         del tok_ids_1, tok_ids_2, flat_maps_1, flat_maps_2, att_masks_1, att_masks_2, weights, flat_embeddings_1, flat_embeddings_2, embeddings_1, embeddings_2, embeddings_orig_1, embeddings_orig_2
@@ -85,24 +87,24 @@ def train_loop(dl, model, model_orig, optimizer, device, loss_type, T, epoch,ckp
 def train(index,dataset,batch_size,model,model_orig,ckpt,loss_type,T,seed,epochs,print_every):
     seed_everything(seed)
     device = xm.xla_device()
-    
+
     # if not xm.is_master_ordinal():
     #     xm.rendezvous('download_only_once')
 
     # token_map_dataset = WikipediaTokenMapDataset(files)
-    
+
     # xm.master_print("Loaded Dataset")
 
     # if xm.is_master_ordinal():
     #     xm.rendezvous('download_only_once')
-    
+
     dist_sampler = torch.utils.data.distributed.DistributedSampler(dataset,num_replicas=xm.xrt_world_size(),rank=xm.get_ordinal(),shuffle=True)
     token_map_dl = DataLoader(dataset,batch_size=batch_size,sampler=dist_sampler,num_workers=0,drop_last=True, collate_fn=token_maps_collate)
     gc.collect()
     model.to(device)
     model_orig.to(device)
     model_orig.eval()
-    
+
     param_optimizer = list(model.named_parameters())
     no_decay = ['bias', 'LayerNorm.weight']
 
@@ -116,7 +118,7 @@ def train(index,dataset,batch_size,model,model_orig,ckpt,loss_type,T,seed,epochs
     for epoch in range(epochs):
         para_token_map_dl = pl.ParallelLoader(token_map_dl,[device]).per_device_loader(device)
         train_loop(para_token_map_dl,model,model_orig, optim,device,loss_type,T,epoch,ckpt,print_every)
-        
+
 
 
 
@@ -151,11 +153,11 @@ if __name__ == "__main__":
     xmp.spawn(train,args=(token_map_dataset,args.batch_size,model,model_orig,args.ckpt,args.loss_type,args.temperature,args.seed,args.num_epochs,args.print_every),nprocs=8,start_method='fork')
 
 
-        
 
 
 
-        
+
+
 
 
 
