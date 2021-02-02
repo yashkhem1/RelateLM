@@ -9,3 +9,4 @@ preprocessed_data/*
 configs/*
 vocab_files/*
 settings.json
+scripts/*

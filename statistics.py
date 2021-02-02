@@ -8,6 +8,8 @@ import string
 from transformers import BertModel, BertConfig
 from prettytable import PrettyTable
 import numpy as np
+from  tqdm import tqdm
+from indictrans import Transliterator
 
 
 def get_pseudo_translation_statistics(mono,dict_path,outfile):
@@ -45,7 +47,7 @@ def get_pseudo_translation_statistics(mono,dict_path,outfile):
                 if word_l1 not in ('\n',' ','',' \n'):
                     dict_keys_used.add(word_l1)
         # print(len(dict_keys_used))
-        i+=1 
+        i+=1
         bar.update(i,total_dict=str(len(dict_keys)),dict_used=str(len(dict_keys_used)),used_perc=str(len(dict_keys_used)/len(dict_keys)),
                         total_words=str(total_words),translated=str(words_translated), translated_perc=str(words_translated/total_words))
 
@@ -73,10 +75,10 @@ def word_frequencies(mono,outfile):
                 else:
                     unique_words+=1
                     freq_dict[word] = 0
-        
+
         i+=1
         bar.update(i,unique_words=unique_words)
-    
+
     with open(outfile,'wb') as w:
         pickle.dump(freq_dict,w)
 
@@ -131,7 +133,7 @@ def compare_transliteration_translation(dict1_path,dict2_path,outfile,choose='fi
                 translation = translation_words[np.argmax(word_probs)]
             elif choose=="any":
                 translation = key if key in translation_words else translation_words[0]
-                
+
             if  key.strip() and translation.strip()==key.strip():
                 same_words.add(key)
 
@@ -161,6 +163,18 @@ def compare_vocab_freq(vocab_path,freq_files,outfile,start_index,end_index):
         for word in whole_words:
             w.write(word+'\n')
 
+def compare_freq_freq(freq_files):
+    source_freq_path, target_freq_path = freq_files
+    source_freq = pickle.load(open(source_freq_path,'rb'))
+    target_freq = pickle.load(open(target_freq_path,'rb'))
+    print("Length of ",source_freq_path,":", len(source_freq))
+    print("Length of ",target_freq_path,":", len(target_freq))
+    same_words = 0
+    for word in tqdm(source_freq):
+        if word in target_freq:
+            # print(word)
+            same_words +=1
+    print("Number of words common in the frequency files:",same_words)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -194,6 +208,9 @@ if __name__ == "__main__":
         compare_transliteration_translation(args.dict_path,args.dict2_path,args.outfile,args.choose)
     elif args.stats == 'whole_words_vocab':
         compare_vocab_freq(args.vocab_file,args.freq_files,args.outfile,args.vocab_start_index,args.vocab_end_index)
-    
-    
+    elif args.stats == 'compare_freqs':
+        compare_freq_freq(args.freq_files)
+
+
+
 

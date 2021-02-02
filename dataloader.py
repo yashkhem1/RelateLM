@@ -117,7 +117,7 @@ def token_maps_collate(batch):
 
 if __name__=="__main__":
     # dataset = BilingualWithNegativeSampling(['preprocessed_data/Hindi_Punjabi_trans_Hindi_bilingual.json'],2)
-    dataset = WikipediaTokenMapDataset(['preprocessed_data/guj_trans_hin_hin_wik.json'])
+    dataset = WikipediaTokenMapDataset(['preprocessed_data/pan_trans_hin_hin_wik.json'])
     dl = DataLoader(dataset=dataset,batch_size=5,shuffle=False,collate_fn=token_maps_collate)
     for i,b in enumerate(dl):
         print(b)
