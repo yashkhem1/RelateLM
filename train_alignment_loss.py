@@ -60,7 +60,7 @@ def train_loop(dl, model, model_orig, optimizer, device, loss_type, T, epoch,ckp
         flat_embeddings_1 = embeddings_1.view(-1,hidden_size)
         flat_embeddings_2 = embeddings_2.view(-1,hidden_size)
         if loss_type == 'mse':
-            loss = loss_fn(flat_embeddings_1[flat_maps_1]*weights,flat_embeddings_2[flat_maps_2]*weights)*(weights.sum()/weights.shape[0])
+            loss = loss_fn(flat_embeddings_1[flat_maps_1]*weights,flat_embeddings_2[flat_maps_2]*weights)*(weights.shape[0]/weights.sum())
             """Tried to run the code below, but the training was exceptionally slow. This is probably because of dynamic shapes
             See https://github.com/pytorch/xla/blob/master/TROUBLESHOOTING.md#known-performance-caveats"""
             # loss = loss_fn(flat_embeddings_1[flat_maps_1[flat_maps_1>0]],flat_embeddings_2[flat_maps_2[flat_maps_2>0]])
