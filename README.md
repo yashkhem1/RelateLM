@@ -8,9 +8,9 @@ This repository contains the source code of the following ACL-IJCNLP 2021 paper:
 
 ## Setup
 First, create the conda environment from [relatelm_env.yml](https://github.com/yashkhem1/RelateLM/blob/master/relatelm_env.yml) file using:
-```console
-$conda env create -f relatelm_env.yml
-$conda activate relatelm_env
+```shell
+conda env create -f relatelm_env.yml
+conda activate relatelm_env
 ```
 After that, setup **indic-trans** library using the instructions from [this](https://github.com/libindic/indic-trans) repository.<br>
 Also note that the pretraining has been done using Google Cloud TPUs so some of the code will be TPU-specific.
@@ -20,8 +20,8 @@ Also note that the pretraining has been done using Google Cloud TPUs so some of 
 This section is comprised of multiple sub-sections which include instructions from creating Bilingual Lexicons to the final training. The final training code requires access to Google Cloud TPUs, however it shouldn't be quite difficult to modify it to run on GPUs (which might take a long time though). A sample script including the entire pipeline is present [here](https://github.com/yashkhem1/RelateLM/blob/master/scripts/relatelm_gujarati.sh)
 ### Frequency files
 We first need to create frequency file for a language, which is nothing but a pickle file containing the frequency counter of the words present in the monolingual data. To create the frequency file, run the following:
-```console
-$python3 statistics.py\
+```shell
+python3 statistics.py\
     --stats word_freq\
     --mono path_to_monolingual_data\
     --outfile path_to_output_pickle_file
@@ -31,8 +31,8 @@ $python3 statistics.py\
 
 ### Bilingual Lexicons
 The second step is to create a bi-directional bilingual lexicon (dictionary) between the source and the target language. The file is a one-to-many mapping between words in source language and target language, along with the frequencies in which they appear in the monolingual data. In order to create such dictionary (in pickle format), run the following command
-```console
-$python3 create_bilingual_dictionary.py\
+```shell
+python3 create_bilingual_dictionary.py\
     --l1 lang_1\
     --l2 lang_2\
     --bilingual path_to_dir_1 [path_to_dir_2]\
@@ -57,8 +57,8 @@ $python3 create_bilingual_dictionary.py\
 
 ### Pseudo Translations
 Using the dictionary created above, we now create the pseudo translation file from the monolingual data. To do this, run the following command:
-```console
-$python3 create_pseudo_translation.py\
+```shell
+python3 create_pseudo_translation.py\
     --mono path_to_monolingual_data\
     --dict_path path_to_bilingual_lexicon_file\
     --outfile path_to_output_pseudo_translation_file\
@@ -75,8 +75,8 @@ $python3 create_pseudo_translation.py\
 
 ### Preprocessed Data
 After the pseudo translations, we pre-process that data into PyTorch tensors, to reduce the pre-processing burden on TPU for final training. This maps the last token for every corresponding word in the monolingual data and the pseudo translated data for alignment later. The output is stored in a json format. For this, run the following command:
-```console
-$python3 preprocess_token_mappings.py\
+```shell
+python3 preprocess_token_mappings.py\
     --mono path_to_monolingual_data\
     --translated path_to_pseudo_translated_data\
     --vocab_file path_to_vocab_file\
@@ -91,13 +91,13 @@ $python3 preprocess_token_mappings.py\
 
 ### Training
 The final step is the actual training using Alignment loss. For this we first set the Google Cloud TPU IP address in the console environment using:
-```console
-$export TPU_IP_ADDRESS=10.89.50.170	#Enter the private IP address of your TPU here
-$export XRT_TPU_CONFIG="tpu_worker;0;$TPU_IP_ADDRESS:8470"
+```shell
+export TPU_IP_ADDRESS=10.89.50.170	#Enter the private IP address of your TPU here
+export XRT_TPU_CONFIG="tpu_worker;0;$TPU_IP_ADDRESS:8470"
 ```
 After that, we can start training by running:
-```console
-$python3 train_alignment_loss.py\
+```shell
+python3 train_alignment_loss.py\
     --files preprocessed_data_l1_l2 preprocessed_data_l2_l1\
     --load path_to_input_model_checkpoint\
     --[is_tf]\
@@ -117,8 +117,8 @@ $python3 train_alignment_loss.py\
 ## Miscellaneous
 ### transliterate_monolingual.py
 Used for transliterating monolingual data to another languages's script. To use, run:
-```console
-$python3 transliterate_monolingual.py\
+```shell
+python3 transliterate_monolingual.py\
     --mono path_to_monolingual_data\
     --outfile path_to_output_transliterated_data\
     --l1 source_lang\
@@ -134,7 +134,7 @@ Contains various other statistics such as pseudo_translation statistics (*get_ps
 
 ### BLEU.py
 Used to calculate BLEU score between Ground truth data and Translated data. To use, run
-```console
-$python3 BLEU.py --mono path_to_ground_truth_data\
+```shell
+python3 BLEU.py --mono path_to_ground_truth_data\
     --pseudo path_to_translated_file
 ```
