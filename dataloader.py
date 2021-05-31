@@ -45,55 +45,7 @@ class WikipediaTokenMapDataset(Dataset):
 
     def __getitem__(self,index):
         return self.dict_list[index]['token_ids_1'],self.dict_list[index]['token_ids_2'],self.dict_list[index]['token_maps_1'],self.dict_list[index]['token_maps_2']
-        # return torch.Tensor(self.dict_list[index]['token_ids_1']),torch.Tensor(self.dict_list[index]['token_ids_2'])
 
-class BilingualWithNegativeSampling(Dataset):
-    def __init__(self,dict_files,neg_samples):
-        self.neg_samples = neg_samples
-        dict_list =[]
-        if isinstance(dict_files,list):
-            for file_ in dict_files:
-                with open(file_,'r') as f:
-                    try:
-                        dict_list += json.load(f)['data']
-                    except json.JSONDecodeError as err:
-                        # grab a reasonable section, say 40 characters.
-                        start, stop = max(0, err.pos - 20), err.pos + 20
-                        snippet = err.doc[start:stop]
-                        print(err)
-                        print('... ' if start else '', snippet, ' ...' if stop < len(err.doc) else '', sep="")
-                        print('^'.rjust(21 if not start else 25))
-                        raise(ValueError)
-        else:
-            with open(dict_files,'r') as f:
-                try:
-                    dict_list = json.load(f)['data']
-                except json.JSONDecodeError as err:
-                    # grab a reasonable section, say 40 characters.
-                    start, stop = max(0, err.pos - 20), err.pos + 20
-                    snippet = err.doc[start:stop]
-                    print(err)
-                    print('... ' if start else '', snippet, ' ...' if stop < len(err.doc) else '', sep="")
-                    print('^'.rjust(21 if not start else 25))
-                    raise(ValueError)
-
-        self.l1_tok_ids = [x['token_ids_1'] for x in dict_list]
-        self.l2_tok_ids = [x['token_ids_2'] for x in dict_list]
-        self.len = len(self.l1_tok_ids)
-        del dict_list
-
-
-    def __len__(self):
-        return self.len
-
-    def __getitem__(self,index):
-        item_list = [torch.tensor(self.l1_tok_ids[index],dtype=torch.long),torch.tensor(self.l2_tok_ids[index],dtype=torch.long)]
-        # negative_indices = np.random.choice(np.arange(self.len),self.neg_samples,replace=False)
-        negative_indices = np.random.randint(0,self.len,self.neg_samples)
-        for neg_index in negative_indices:
-            item_list.append(torch.tensor(self.l1_tok_ids[neg_index],dtype=torch.long))
-            item_list.append(torch.tensor(self.l2_tok_ids[neg_index],dtype=torch.long))
-        return item_list
 
 def custom_collate_fn(batch):
     sentences_1 = [x[0] for x in batch]
@@ -115,10 +67,10 @@ def token_maps_collate(batch):
     del tok_maps_1, tok_maps_2
     return tok_ids_1, tok_ids_2, flat_maps_1, flat_maps_2, att_masks_1, att_masks_2, weights
 
-if __name__=="__main__":
-    # dataset = BilingualWithNegativeSampling(['preprocessed_data/Hindi_Punjabi_trans_Hindi_bilingual.json'],2)
-    dataset = WikipediaTokenMapDataset(['preprocessed_data/pan_trans_hin_hin_wik.json'])
-    dl = DataLoader(dataset=dataset,batch_size=5,shuffle=False,collate_fn=token_maps_collate)
-    for i,b in enumerate(dl):
-        print(b)
-        break
+# if __name__=="__main__":
+#     dataset = BilingualWithNegativeSampling(['preprocessed_data/Hindi_Punjabi_trans_Hindi_bilingual.json'],2)
+#     dataset = WikipediaTokenMapDataset(['preprocessed_data/pan_trans_hin_hin_wik.json'])
+#     dl = DataLoader(dataset=dataset,batch_size=5,shuffle=False,collate_fn=token_maps_collate)
+#     for i,b in enumerate(dl):
+#         print(b)
+#         break

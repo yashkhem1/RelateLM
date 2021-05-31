@@ -112,10 +112,10 @@ def parse_ben_hin():
 
 
 
-if __name__=="__main__":
-    # download_pan_hin()
-    # parse_pan_hin()
-    # download_guj_hin()
-    # parse_guj_hin()
-    # download_ben_hin()
-    parse_ben_hin()
+# if __name__=="__main__":
+#     # download_pan_hin()
+#     # parse_pan_hin()
+#     # download_guj_hin()
+#     # parse_guj_hin()
+#     # download_ben_hin()
+#     # parse_ben_hin()

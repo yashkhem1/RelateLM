@@ -88,16 +88,6 @@ def train(index,dataset,batch_size,model,model_orig,ckpt,loss_type,T,seed,epochs
     seed_everything(seed)
     device = xm.xla_device()
 
-    # if not xm.is_master_ordinal():
-    #     xm.rendezvous('download_only_once')
-
-    # token_map_dataset = WikipediaTokenMapDataset(files)
-
-    # xm.master_print("Loaded Dataset")
-
-    # if xm.is_master_ordinal():
-    #     xm.rendezvous('download_only_once')
-
     dist_sampler = torch.utils.data.distributed.DistributedSampler(dataset,num_replicas=xm.xrt_world_size(),rank=xm.get_ordinal(),shuffle=True)
     token_map_dl = DataLoader(dataset,batch_size=batch_size,sampler=dist_sampler,num_workers=0,drop_last=True, collate_fn=token_maps_collate)
     gc.collect()

@@ -1,0 +1,6 @@
+*
+!.gitignore
+!/Gujarati-Hindi/
+!/Gujarati-Hindi/*.txt
+!/Hindi-Gujarati/
+!/Hindi-Gujarati/*.txt
