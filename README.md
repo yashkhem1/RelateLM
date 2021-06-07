@@ -15,8 +15,8 @@ conda activate relatelm_env
 After that, setup **indic-trans** library using the instructions from [this](https://github.com/libindic/indic-trans) repository.<br>
 Also note that the pretraining has been done using Google Cloud TPUs so some of the code will be TPU-specific.
 ## Pretraining with MLM
-We need to create 2 new conda environments for Pretraining with BERT. We will make use of some code from Google BERT Repo (https://github.com/google-research/bert) along with our code. Pretraining BERT has 2 components:
-1. Preprocessing:
+We need to create 2 new conda environments for Pretraining with BERT. We will make use of some code from [Google BERT Repo](https://github.com/google-research/bert) along with our code. Pretraining BERT has 2 components:
+1. Preprocessing: <br>
 (a) The current BERT Preprocessig code needs to run in Tensorflow v2. Create a new conda environment and set it up as follows:
 ```shell
 conda env create --name bert_preprocessing
@@ -40,7 +40,7 @@ python3 create_pretraining_data_ENS.py \
   --dupe_factor=5
 ```
 
-2. Pre-training
+2. Pre-training:<br>
 (a) The BERT Pretraining code used needs to run in Tensorflow v1 (same as the original Google BERT). Create a new conda environment and set it up as follows:
 ```shell
 conda env create --name bert_pretraining
@@ -171,6 +171,10 @@ python3 train_alignment_loss.py\
 `--loss_type` : **mse** or **cstv** for MSE and Contrastive loss respectively. By default, the loss is MSE.
 
 ## Fine-Tuning on Downstream Tasks
+We fine tune of 3 different tasks. The dataset procurement, data cleaning and fine-tuning steps are as follows:
+
+1. Named Entity Recognition:
+(a) 
 
 ## Miscellaneous
 ### transliterate_monolingual.py
