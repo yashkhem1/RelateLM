@@ -173,7 +173,12 @@ python3 train_alignment_loss.py\
 ## Fine-Tuning on Downstream Tasks
 We fine tune of 3 different tasks. The dataset procurement, data cleaning and fine-tuning steps are as follows:
 
-1. Named Entity Recognition:
+1. Named Entity Recognition:<br>
+The dataset is obtained from XTREME Dataset(for en and hi) and WikiAnn NER (for pa, gu, bn, or, as). For preprocessing the WikiAnn NER dataset files, use  "Fine Tuning/wikiann_preprocessor.py" as follows:
+```shell
+python3 wikiann_preprocessor.py --infile language/language-train.txt --outfile language/train-language.tsv
+```
+Use the "Fine Tuning/NER_Fine_Tuning.ipynb" for NER evaluation.<br> 
 2. Part of Speech Tagging
 3. Document Classification
 
