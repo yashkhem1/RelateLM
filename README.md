@@ -173,13 +173,27 @@ python3 train_alignment_loss.py\
 ## Fine-Tuning on Downstream Tasks
 We fine tune of 3 different tasks. The dataset procurement, data cleaning and fine-tuning steps are as follows:
 
-1. Named Entity Recognition:<br>
-The dataset is obtained from XTREME Dataset(for en and hi) and WikiAnn NER (for pa, gu, bn, or, as). For preprocessing the WikiAnn NER dataset files, use  "Fine Tuning/wikiann_preprocessor.py" as follows:
+1. Named Entity Recognition :<br>
+The dataset is obtained from XTREME Dataset(for en and hi) and WikiAnn NER (for pa, gu, bn, or, as). For preprocessing the WikiAnn NER dataset files, use  "Fine Tuning/Utility Files/wikiann_preprocessor.py" as follows:
 ```shell
 python3 wikiann_preprocessor.py --infile language/language-train.txt --outfile language/train-language.tsv
 ```
-Use the "Fine Tuning/NER_Fine_Tuning.ipynb" for NER evaluation.<br> 
-2. Part of Speech Tagging
+Use the "Fine Tuning/NER_Fine_Tuning.ipynb" for NER evaluation.<br><br> 
+
+POS Tagging and Doc Classification : The datasets for POS Tagging and Doc Classification has been obtained from (Indian Language Technology Proliferation and Deployment Centre)[http://tdil-dc.in/]. Exact links for datasets are available in "Fine Tuning/Utility Files/tdil_dataset.txt".<br><br>
+2. Part of Speech Tagging :<br>
+Preprocess the data using the preprocessing files from "Fine Tuning/Utility Files/POS/". The "file to language mapping" has been included in "Fine Tuning/Utility Files/POS/Language to File Mapping.txt". Then combines the files using "Fine Tuning/Utility Files/POS/files_combiner.py" to create the train-test splits.
+```shell
+python3 pos_preprocessor.py --input_folder Language_Raw_Files/ --output_folder Language_POS_Data/
+python3 files_combiner.py   --input_folder Language_POS/ --output_folder datasets/ --l_code_actual language_code_as_per_ISO_639 --l_code_in_raw_data language_code_as_per_tdil_dataset
+```
+We use the (BIS Tagset)[https://www.aclweb.org/anthology/W12-5012.pdf] as the POS tags. The Indian Languages are already tagged with the BIS Tagset whereas the English Dataset is labelled with Penn Tagset. To convert the Penn to BIS, use "Fine Tuning/Utility Files/convert_penn_to_bis.py" to run the following command on the directory containing preprocessed POS dataset files:
+```shell
+python3 convert_penn_to_bis.py --input_folder English_POS_Penn/ --output_folder English_POS_BIS/
+```
+Use the "Fine Tuning/POS_Fine_Tuning.ipynb" for POS evaluation.<br> 
+
+<br>
 3. Document Classification
 
 ## Miscellaneous

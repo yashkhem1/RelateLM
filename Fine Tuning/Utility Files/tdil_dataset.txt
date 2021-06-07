@@ -1,0 +1,7 @@
+Hindi - Punjabi  Parallel Chunked Text Corpus ILCI-II : http://tdil-dc.in/index.php?option=com_download&task=showresourceDetails&toolid=2066&lang=en
+Hindi - Gujarati Parallel Chunked Text Corpus ILCI-II : http://tdil-dc.in/index.php?option=com_download&task=showresourceDetails&toolid=2036&lang=en
+Hindi - Bangla   Parallel Chunked Text Corpus ILCI-II : http://tdil-dc.in/index.php?option=com_download&task=showresourceDetails&toolid=2049&lang=en
+Hindi - Assamese Parallel Chunked Text Corpus ILCI-II : http://tdil-dc.in/index.php?option=com_download&task=showresourceDetails&toolid=2060&lang=en
+Hindi - English  Parallel Chunked Text Corpus ILCI-II : http://tdil-dc.in/index.php?option=com_download&task=showresourceDetails&toolid=2038&lang=en
+
+
