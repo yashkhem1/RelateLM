@@ -24,7 +24,7 @@ conda activate bert_preprocessing
 conda install tensorflow==2.3.0
 
 ```
-(b) Run the following command from the directory "BERT Pretraining and Preprocessing/Preprocessing Code" to create the preprocessing code. Refer to the Google BERT Repo for other information.
+(b) Run the following command from the directory "BERT Pretraining and Preprocessing/Preprocessing Code" to create the preprocessing code. Refer to the [Google BERT Repo](https://github.com/google-research/bert) for other information.
 
 ```shell
 python3 create_pretraining_data_ENS.py \
@@ -48,7 +48,7 @@ conda activate bert_pretraining
 conda install -c conda-forge tensorflow==1.14
 
 ```
-(b) Clone the Original Google BERT Repo from (https://github.com/google-research/bert) and replace the create_pretraining_data.py with our "BERT Pretraining and Preprocessing/Pretraining Diff Files/run_pretraining_without_NSP.py". Note that to run the pretraining on TPUs, the init_checkpoint, input_file and output_dir need to be on a Google Cloud Bucket.
+(b) Clone the Original [Google BERT Repo](https://github.com/google-research/bert) and replace the create_pretraining_data.py with our "BERT Pretraining and Preprocessing/Pretraining Diff Files/run_pretraining_without_NSP.py". Note that to run the pretraining on TPUs, the init_checkpoint, input_file and output_dir need to be on a Google Cloud Bucket.
 Run the following command for pretraining:
 
 ```shell
@@ -174,7 +174,8 @@ python3 train_alignment_loss.py\
 We fine tune of 3 different tasks. The dataset procurement, data cleaning and fine-tuning steps are as follows:
 
 1. Named Entity Recognition:
-(a) 
+2. Part of Speech Tagging
+3. Document Classification
 
 ## Miscellaneous
 ### transliterate_monolingual.py
