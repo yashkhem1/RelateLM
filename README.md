@@ -15,6 +15,64 @@ conda activate relatelm_env
 After that, setup **indic-trans** library using the instructions from [this](https://github.com/libindic/indic-trans) repository.<br>
 Also note that the pretraining has been done using Google Cloud TPUs so some of the code will be TPU-specific.
 ## Pretraining with MLM
+We need to create 2 new conda environments for Pretraining with BERT. We will make use of some code from Google BERT Repo (https://github.com/google-research/bert) along with our code. Pretraining BERT has 2 components:
+1. Preprocessing:
+(a) The current BERT Preprocessig code needs to run in Tensorflow v2. Create a new conda environment and set it up as follows:
+```shell
+conda env create --name bert_preprocessing
+conda activate bert_preprocessing
+conda install tensorflow==2.3.0
+
+```
+(b) Run the following command from the directory "BERT Pretraining and Preprocessing/Preprocessing Code" to create the preprocessing code. Refer to the Google BERT Repo for other information.
+
+```shell
+python3 create_pretraining_data_ENS.py \
+  --input_file=./sample_text.txt \
+  --output_file=/tmp/tf_examples.tfrecord \
+  --vocab_file=$BERT_BASE_DIR/vocab.txt \
+  --do_lower_case=True \
+  --max_seq_length=128 \
+  --max_predictions_per_seq=20 \
+  --do_whole_word_mask=True \
+  --masked_lm_prob=0.15 \
+  --random_seed=12345 \
+  --dupe_factor=5
+```
+
+2. Pre-training
+(a) The BERT Pretraining code used needs to run in Tensorflow v1 (same as the original Google BERT). Create a new conda environment and set it up as follows:
+```shell
+conda env create --name bert_pretraining
+conda activate bert_pretraining
+conda install -c conda-forge tensorflow==1.14
+
+```
+(b) Clone the Original Google BERT Repo from (https://github.com/google-research/bert) and replace the create_pretraining_data.py with our "BERT Pretraining and Preprocessing/Pretraining Diff Files/run_pretraining_without_NSP.py". Note that to run the pretraining on TPUs, the init_checkpoint, input_file and output_dir need to be on a Google Cloud Bucket.
+Run the following command for pretraining:
+
+```shell
+python run_pretraining_without_NSP.py \
+  --input_file=/tmp/tf_examples.tfrecord \
+  --output_dir=/tmp/pretraining_output \
+  --do_train=True \
+  --do_eval=True \
+  --bert_config_file=$BERT_CONFIG_DIR/bert_config.json \
+  --init_checkpoint=$BERT_BASE_DIR/bert_model.ckpt \
+  --train_batch_size=32 \
+  --max_seq_length=128 \
+  --max_predictions_per_seq=20 \
+  --num_train_steps=20 \
+  --num_warmup_steps=10 \
+  --learning_rate=2e-5 \
+  --save_checkpoint_steps=10 \
+  --iterations_per_loop=5 \
+  --use_tpu=True \
+  --tpu_name=node-1 \
+  --tpu_zone=zone-1 \
+  --num_tpu_cores=8 
+```
+
 
 ## Pretraining with Alignment Loss
 This section is comprised of multiple sub-sections which include instructions from creating Bilingual Lexicons to the final training. The final training code requires access to Google Cloud TPUs, however it shouldn't be quite difficult to modify it to run on GPUs (which might take a long time though). A sample script including the entire pipeline is present [here](https://github.com/yashkhem1/RelateLM/blob/master/scripts/relatelm_gujarati.sh)
