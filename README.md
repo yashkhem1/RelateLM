@@ -1,5 +1,5 @@
 # RelateLM
-This repository contains the source code of the following ACL-IJCNLP 2021 paper: [Exploiting Language Relatedness for Low Web-Resource Language Model Adaptation: An Indic Languages Study](https://www.example.com). It is divided into 5 sections:
+This repository contains the source code of the following ACL-IJCNLP 2021 paper: [Exploiting Language Relatedness for Low Web-Resource Language Model Adaptation: An Indic Languages Study](https://arxiv.org/abs/2106.03958). It is divided into 5 sections:
 - [Setup](#setup)
 - [Pretraining with MLM](#pretraining-with-mlm)
 - [Pretraining with Alignment Loss](#pretraining-with-alignment-loss)
